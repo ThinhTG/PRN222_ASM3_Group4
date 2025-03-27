@@ -1,0 +1,57 @@
+﻿@page "/members"
+@using BusinessObject.Models
+@inject Services.InterfaceService.IMemberService MemberService
+
+<h3>Danh sách Thành viên</h3>
+
+@if (members == null)
+{
+    <p>Đang tải...</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>MemberID</th>
+                <th>CompanyName</th>
+                <th>Email</th>
+                <th>City</th>
+                <th>Country</th>
+                <th>Password</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var member in members)
+            {
+                <tr>
+                    <td>@member.MemberId</td>
+                    <td>@member.CompanyName</td>
+                    <td>@member.Email</td>
+                    <td>@member.City</td>
+                    <td>@member.Country</td>
+                    <td>@member.Password</td>
+                    <td>
+                        <button @onclick="() => DeleteMember(member.MemberId)" class="btn btn-danger">Xóa</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<Member> members;
+
+    protected override async Task OnInitializedAsync()
+    {
+        members = MemberService.GetAllMembers().ToList();
+    }
+
+    private void DeleteMember(int id)
+    {
+        MemberService.DeleteMember(id);
+        members = MemberService.GetAllMembers().ToList();
+    }
+}

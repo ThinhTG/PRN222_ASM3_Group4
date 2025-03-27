@@ -1,0 +1,25 @@
+# Ignore Visual Studio specific files
+.vs/
+*.vsidx
+*.vscode/
+
+# Ignore build output
+bin/
+obj/
+*.exe
+*.dll
+*.pdb
+
+# Ignore user-specific files
+*.user
+*.suo
+*.cache
+*.csproj.user
+
+# Ignore dependencies
+packages/
+node_modules/
+
+# Ignore logs and temp files
+logs/
+*.log
