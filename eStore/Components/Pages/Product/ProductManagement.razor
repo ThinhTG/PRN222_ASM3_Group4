@@ -1,0 +1,141 @@
+﻿@page "/products"
+@using BusinessObject.Models
+@inject Services.InterfaceService.IProductService ProductService
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+
+<div class="container mt-4">
+    <h3 class="mb-4 text-primary">Product Management</h3>
+
+    <div class="card shadow-sm p-3 mb-4">
+        <div class="d-flex justify-content-between align-items-center">
+            <NavLink class="btn btn-primary" href="/products/add">
+                <i class="bi bi-plus-circle me-2"></i>Add New Product
+            </NavLink>
+
+            <div class="d-flex gap-3">
+                <div class="input-group w-auto">
+                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                    <input type="text" class="form-control" placeholder="Search by name"
+                           @bind="searchName" @bind:event="oninput" />
+                </div>
+                <div class="input-group w-auto">
+                    <span class="input-group-text">$</span>
+                    <input type="number" class="form-control" placeholder="Search by price"
+                           @bind="searchPrice" @bind:event="oninput" />
+                </div>
+                <button class="btn btn-outline-secondary" @onclick="SearchProducts">
+                    <i class="bi bi-funnel me-2"></i>Filter
+                </button>
+            </div>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @errorMessage
+            <button type="button" class="btn-close" @onclick="() => errorMessage = null"></button>
+        </div>
+    }
+
+    <div class="card shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Category</th>
+                        <th class="text-end">Price</th>
+                        <th class="text-end">Stock</th>
+                        <th>Image</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var product in products)
+                    {
+                        <tr>
+                            <td>@product.ProductId</td>
+                            <td>
+                                <a href="@($"/products/details/{product.ProductId}")" class="text-primary text-decoration-none">
+                                    @product.ProductName
+                                </a>
+                            </td>
+                            <td>@(product.Category?.CategoryName ?? "N/A")</td>
+                            <td class="text-end">@product.UnitPrice.ToString("C")</td>
+                            <td class="text-end">@product.UnitsInStock</td>
+                            <td>
+                                @if (!string.IsNullOrEmpty(product.ImageUrl))
+                                {
+                                    <img src="@product.ImageUrl" alt="@product.ProductName"
+                                         class="img-thumbnail" style="width: 50px; height: 50px; object-fit: cover;" />
+                                }
+                                else
+                                {
+                                    <span class="text-muted">No Image</span>
+                                }
+                            </td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <NavLink class="btn btn-sm btn-outline-warning"
+                                             href="@($"/products/edit/{product.ProductId}")">
+                                        <i class="bi bi-pencil"></i>
+                                    </NavLink>
+                                    <NavLink class="btn btn-sm btn-outline-danger"
+                                             href="@($"/products/delete/{product.ProductId}")">
+                                        <i class="bi bi-trash"></i>
+                                    </NavLink>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<Product> products = new();
+    private string searchName = string.Empty;
+    private decimal? searchPrice = null;
+    private string errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            products = ProductService.GetAll().ToList();
+            if (!products.Any())
+            {
+                errorMessage = "No products found. Please add a new product.";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error loading products: {ex.Message}";
+        }
+    }
+
+    private void SearchProducts()
+    {
+        try
+        {
+            products = ProductService.Search(searchName, searchPrice).ToList();
+            if (!products.Any())
+            {
+                errorMessage = "No products match your search criteria.";
+            }
+            else
+            {
+                errorMessage = null;
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error searching products: {ex.Message}";
+        }
+    }
+}

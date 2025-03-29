@@ -1,0 +1,152 @@
+﻿@page "/products/details/{Id:int}"
+@using BusinessObject.Models
+@inject Services.InterfaceService.IProductService ProductService
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+
+<div class="container mt-5">
+    <h3 class="mb-4 text-primary fw-bold">Product Details</h3>
+
+    @if (product == null)
+    {
+        <div class="text-center my-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="text-muted mt-2">Loading product details...</p>
+        </div>
+    }
+    else if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @errorMessage
+            <button type="button" class="btn-close" @onclick="() => errorMessage = null"></button>
+        </div>
+    }
+    else
+    {
+        <div class="card shadow-lg border-0 rounded-3 p-4 animate__animated animate__fadeIn">
+            <div class="row g-4">
+                <div class="col-md-4">
+                    @if (!string.IsNullOrEmpty(product.ImageUrl))
+                    {
+                        <div class="image-container">
+                            <img src="@product.ImageUrl" alt="@product.ProductName"
+                                 class="img-fluid rounded-3 shadow-sm" style="max-width: 100%; height: auto; transition: transform 0.3s ease;" />
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center p-4 bg-light rounded-3">
+                            <i class="bi bi-image text-muted" style="font-size: 3rem;"></i>
+                            <p class="text-muted mt-2">No Image Available</p>
+                        </div>
+                    }
+                </div>
+                <div class="col-md-8">
+                    <h4 class="fw-bold text-dark mb-3">@product.ProductName</h4>
+                    <hr class="my-4" style="border-color: #dee2e6;" />
+                    <dl class="row mb-4">
+                        <dt class="col-sm-3 text-muted">ID</dt>
+                        <dd class="col-sm-9 text-dark">@product.ProductId</dd>
+                        <dt class="col-sm-3 text-muted">Category</dt>
+                        <dd class="col-sm-9 text-dark">@(product.Category?.CategoryName ?? "N/A")</dd>
+                        <dt class="col-sm-3 text-muted">Price</dt>
+                        <dd class="col-sm-9 text-success fw-bold">@product.UnitPrice.ToString("C")</dd>
+                        <dt class="col-sm-3 text-muted">Stock</dt>
+                        <dd class="col-sm-9 text-dark">
+                            @if (product.UnitsInStock > 0)
+                            {
+                                <span class="badge bg-success">In Stock (@product.UnitsInStock)</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-danger">Out of Stock</span>
+                            }
+                        </dd>
+                    </dl>
+                    <div class="d-flex gap-2">
+                        <NavLink class="btn btn-primary btn-lg px-4 shadow-sm" href="@($"/products/edit/{product.ProductId}")">
+                            <i class="bi bi-pencil me-2"></i>Edit
+                        </NavLink>
+                        <NavLink class="btn btn-outline-secondary btn-lg px-4 shadow-sm" href="/products">
+                            <i class="bi bi-arrow-left me-2"></i>Back to List
+                        </NavLink>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<style>
+    .card {
+        background-color: #fff;
+        transition: transform 0.2s ease, box-shadow 0.3s ease;
+    }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1) !important;
+        }
+
+    .image-container {
+        position: relative;
+        overflow: hidden;
+        border-radius: 10px;
+    }
+
+        .image-container img:hover {
+            transform: scale(1.05);
+        }
+
+    .badge {
+        font-size: 0.9rem;
+        padding: 0.5em 1em;
+    }
+
+    .btn-lg {
+        font-size: 1.1rem;
+        border-radius: 8px;
+    }
+
+    .text-primary {
+        color: #0d6efd !important;
+    }
+
+    .text-success {
+        color: #28a745 !important;
+    }
+
+    .text-dark {
+        color: #343a40 !important;
+    }
+
+    .text-muted {
+        color: #6c757d !important;
+    }
+</style>
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private Product product;
+    private string errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            product = ProductService.GetById(Id);
+            if (product == null)
+            {
+                errorMessage = "Product not found.";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error loading product: {ex.Message}";
+        }
+    }
+}

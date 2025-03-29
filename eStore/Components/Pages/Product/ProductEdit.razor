@@ -1,0 +1,256 @@
+﻿@page "/products/edit/{id:int}"
+@using BusinessObject.Models
+@using CloudinaryDotNet
+@using CloudinaryDotNet.Actions
+@inject Services.InterfaceService.IProductService ProductService
+@inject Services.InterfaceService.ICategoryService CategoryService
+@inject NavigationManager Navigation
+@inject Cloudinary Cloudinary
+@rendermode InteractiveServer
+
+<div class="container mt-4">
+    <h3 class="mb-4 text-primary">Edit Product</h3>
+
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @errorMessage
+            <button type="button" class="btn-close" @onclick="() => errorMessage = null"></button>
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(successMessage))
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @successMessage
+            <button type="button" class="btn-close" @onclick="() => successMessage = null"></button>
+        </div>
+    }
+
+    @if (isLoading)
+    {
+        <div class="text-center my-3">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    }
+    else if (product == null)
+    {
+        <div class="alert alert-warning">Product not found.</div>
+    }
+    else if (categories == null || !categories.Any())
+    {
+        <div class="alert alert-warning">No categories available. Please add a category first.</div>
+    }
+    else
+    {
+        <div class="card shadow-sm p-4">
+            <EditForm Model="product" OnValidSubmit="UpdateProduct">
+                <DataAnnotationsValidator />
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label"><i class="bi bi-hash me-2"></i>Product ID</label>
+                            <InputNumber class="form-control" @bind-Value="product.ProductId" readonly />
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label"><i class="bi bi-tag me-2"></i>Product Name</label>
+                            <InputText class="form-control" @bind-Value="product.ProductName" />
+                            <ValidationMessage For="@(() => product.ProductName)" class="text-danger" />
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label"><i class="bi bi-list-ul me-2"></i>Category</label>
+                            <InputSelect class="form-control" @bind-Value="product.CategoryId">
+                                <option value="0" disabled>Select a category</option>
+                                @foreach (var category in categories)
+                                {
+                                    <option value="@category.CategoryId">@category.CategoryName</option>
+                                }
+                            </InputSelect>
+                            <ValidationMessage For="@(() => product.CategoryId)" class="text-danger" />
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label"><i class="bi bi-box me-2"></i>Weight</label>
+                            <InputText class="form-control" @bind-Value="product.Weight" />
+                            <ValidationMessage For="@(() => product.Weight)" class="text-danger" />
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label"><i class="bi bi-currency-dollar me-2"></i>Unit Price</label>
+                            <InputNumber class="form-control" @bind-Value="product.UnitPrice" />
+                            <ValidationMessage For="@(() => product.UnitPrice)" class="text-danger" />
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label"><i class="bi bi-boxes me-2"></i>Units In Stock</label>
+                            <InputNumber class="form-control" @bind-Value="product.UnitsInStock" />
+                            <ValidationMessage For="@(() => product.UnitsInStock)" class="text-danger" />
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="mb-3">
+                            <label class="form-label"><i class="bi bi-image me-2"></i>Image</label>
+                            <InputFile class="form-control" OnChange="HandleFileSelected" />
+                            @if (isUploading)
+                            {
+                                <div class="mt-2 text-muted">
+                                    <div class="spinner-border spinner-border-sm text-primary me-2" role="status">
+                                        <span class="visually-hidden">Uploading...</span>
+                                    </div>
+                                    Uploading...
+                                </div>
+                            }
+                            @if (!string.IsNullOrEmpty(product.ImageUrl))
+                            {
+                                <div class="mt-2">
+                                    <img src="@product.ImageUrl" alt="Product Image" class="img-thumbnail" style="width: 100px; height: 100px; object-fit: cover;" />
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary" disabled="@(isLoading || isUploading)">
+                        <i class="bi bi-save me-2"></i>Update Product
+                    </button>
+                    <NavLink class="btn btn-outline-secondary" href="/products">
+                        <i class="bi bi-x-circle me-2"></i>Cancel
+                    </NavLink>
+                </div>
+            </EditForm>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private Product product;
+    private List<Category> categories = new();
+    private string errorMessage;
+    private string successMessage;
+    private bool isLoading = true;
+    private bool isUploading;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            // Fetch the product
+            product = ProductService.GetById(Id);
+            if (product == null)
+            {
+                errorMessage = "Product not found.";
+                return;
+            }
+
+            // Fetch the categories
+            categories = CategoryService.GetAll().ToList();
+            if (!categories.Any())
+            {
+                errorMessage = "No categories available. Please add a category first.";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error loading data: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task HandleFileSelected(InputFileChangeEventArgs e)
+    {
+        try
+        {
+            if (e.File == null)
+            {
+                errorMessage = "Please select a file.";
+                return;
+            }
+
+            if (!new[] { ".jpg", ".jpeg", ".png", ".gif" }.Contains(Path.GetExtension(e.File.Name).ToLower()))
+            {
+                errorMessage = "Please select an image file (.jpg, .jpeg, .png, .gif).";
+                return;
+            }
+
+            isUploading = true;
+            errorMessage = successMessage = null;
+            StateHasChanged();
+
+            using var memoryStream = new MemoryStream();
+            await e.File.OpenReadStream(maxAllowedSize: 1024 * 1024 * 10).CopyToAsync(memoryStream);
+            memoryStream.Position = 0;
+
+            var uploadResult = await Cloudinary.UploadAsync(new ImageUploadParams
+                {
+                    File = new FileDescription(e.File.Name, memoryStream),
+                    Folder = "asset",
+                    Timestamp = DateTime.UtcNow
+                });
+
+            if (uploadResult.Error != null)
+            {
+                errorMessage = $"Error uploading image: {uploadResult.Error.Message}";
+                return;
+            }
+
+            product.ImageUrl = uploadResult.SecureUrl.ToString();
+            successMessage = "Image uploaded successfully!";
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error uploading image: {ex.Message}";
+        }
+        finally
+        {
+            isUploading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task UpdateProduct()
+    {
+        if (string.IsNullOrEmpty(product.ProductName) || string.IsNullOrEmpty(product.Weight))
+        {
+            errorMessage = "Product Name and Weight are required.";
+            return;
+        }
+
+        if (product.CategoryId == 0)
+        {
+            errorMessage = "Please select a category.";
+            return;
+        }
+
+        try
+        {
+            isLoading = true;
+            ProductService.Update(product);
+            Navigation.NavigateTo("/products");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error updating product: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+}

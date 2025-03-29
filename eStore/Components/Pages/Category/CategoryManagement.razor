@@ -1,0 +1,119 @@
+﻿@page "/categories"
+@using BusinessObject.Models
+@inject Services.InterfaceService.ICategoryService CategoryService
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+
+<div class="container mt-4">
+    <h3 class="mb-4 text-primary">Category Management</h3>
+
+    <div class="card shadow-sm p-3 mb-4">
+        <div class="d-flex justify-content-between align-items-center">
+            <NavLink class="btn btn-primary" href="/categories/add">
+                <i class="bi bi-plus-circle me-2"></i>Add New Category
+            </NavLink>
+
+            <div class="d-flex gap-3">
+                <div class="input-group w-auto">
+                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                    <input type="text" class="form-control" placeholder="Search by name"
+                           @bind="searchName" @bind:event="oninput" />
+                </div>
+                <button class="btn btn-outline-secondary" @onclick="SearchCategories">
+                    <i class="bi bi-funnel me-2"></i>Filter
+                </button>
+            </div>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @errorMessage
+            <button type="button" class="btn-close" @onclick="() => errorMessage = null"></button>
+        </div>
+    }
+
+    <div class="card shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Description</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var category in categories)
+                    {
+                        <tr>
+                            <td>@category.CategoryId</td>
+                            <td>
+                                <a href="@($"/categories/details/{category.CategoryId}")" class="text-primary text-decoration-none">
+                                    @category.CategoryName
+                                </a>
+                            </td>
+                            <td>@category.Description</td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <NavLink class="btn btn-sm btn-outline-warning"
+                                             href="@($"/categories/edit/{category.CategoryId}")">
+                                        <i class="bi bi-pencil"></i>
+                                    </NavLink>
+                                    <NavLink class="btn btn-sm btn-outline-danger"
+                                             href="@($"/categories/delete/{category.CategoryId}")">
+                                        <i class="bi bi-trash"></i>
+                                    </NavLink>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<Category> categories = new();
+    private string searchName = string.Empty;
+    private string errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            categories = CategoryService.GetAll().ToList();
+            if (!categories.Any())
+            {
+                errorMessage = "No categories found. Please add a new category.";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error loading categories: {ex.Message}";
+        }
+    }
+
+    private void SearchCategories()
+    {
+        try
+        {
+            categories = CategoryService.Search(searchName).ToList();
+            if (!categories.Any())
+            {
+                errorMessage = "No categories match your search criteria.";
+            }
+            else
+            {
+                errorMessage = null;
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error searching categories: {ex.Message}";
+        }
+    }
+}

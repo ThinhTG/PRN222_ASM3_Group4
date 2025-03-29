@@ -1,0 +1,147 @@
+﻿@page "/categories/delete/{Id:int}"
+@using BusinessObject.Models
+@inject Services.InterfaceService.ICategoryService CategoryService
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+
+<div class="container mt-5">
+    <h3 class="mb-4 text-danger fw-bold">Confirm Delete</h3>
+
+    @if (category == null)
+    {
+        <div class="text-center my-5">
+            <div class="spinner-border text-danger" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="text-muted mt-2">Loading category details...</p>
+        </div>
+    }
+    else if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @errorMessage
+            <button type="button" class="btn-close" @onclick="() => errorMessage = null"></button>
+        </div>
+    }
+    else
+    {
+        <div class="card shadow-lg border-0 rounded-3 p-4 animate__animated animate__fadeIn">
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="text-center p-4 bg-light rounded-3">
+                        <i class="bi bi-tags-fill text-muted" style="font-size: 3rem;"></i>
+                        <p class="text-muted mt-2">Category Icon</p>
+                    </div>
+                </div>
+                <div class="col-md-8">
+                    <h5 class="text-danger mb-3">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        Are you sure you want to delete this category?
+                    </h5>
+                    <hr class="my-4" style="border-color: #dee2e6;" />
+                    <dl class="row mb-4">
+                        <dt class="col-sm-3 text-muted">ID</dt>
+                        <dd class="col-sm-9 text-dark">@category.CategoryId</dd>
+                        <dt class="col-sm-3 text-muted">Name</dt>
+                        <dd class="col-sm-9 text-dark fw-bold">@category.CategoryName</dd>
+                        <dt class="col-sm-3 text-muted">Description</dt>
+                        <dd class="col-sm-9 text-dark">@(string.IsNullOrEmpty(category.Description) ? "N/A" : category.Description)</dd>
+                    </dl>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-danger btn-lg px-4 shadow-sm" @onclick="ConfirmDelete" disabled="@isDeleting">
+                            @if (isDeleting)
+                            {
+                                <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                <span>Deleting...</span>
+                            }
+                            else
+                            {
+                                <i class="bi bi-trash me-2"></i>
+                                <span>Delete</span>
+                            }
+                        </button>
+                        <NavLink class="btn btn-outline-secondary btn-lg px-4 shadow-sm" href="/categories">
+                            <i class="bi bi-x-circle me-2"></i>Cancel
+                        </NavLink>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<style>
+    .card {
+        background-color: #fff;
+        transition: transform 0.2s ease, box-shadow 0.3s ease;
+    }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1) !important;
+        }
+
+    .badge {
+        font-size: 0.9rem;
+        padding: 0.5em 1em;
+    }
+
+    .btn-lg {
+        font-size: 1.1rem;
+        border-radius: 8px;
+    }
+
+    .text-danger {
+        color: #dc3545 !important;
+    }
+
+    .text-dark {
+        color: #343a40 !important;
+    }
+
+    .text-muted {
+        color: #6c757d !important;
+    }
+</style>
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private Category category;
+    private string errorMessage;
+    private bool isDeleting = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            category = CategoryService.GetById(Id);
+            if (category == null)
+            {
+                errorMessage = "Category not found.";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error loading category: {ex.Message}";
+        }
+    }
+
+    private async Task ConfirmDelete()
+    {
+        try
+        {
+            isDeleting = true;
+            StateHasChanged();
+            CategoryService.Delete(Id);
+            Navigation.NavigateTo("/categories");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error deleting category: {ex.Message}";
+            isDeleting = false;
+            StateHasChanged();
+        }
+    }
+}
