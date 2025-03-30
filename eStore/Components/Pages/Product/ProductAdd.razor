@@ -121,6 +121,111 @@
     }
 </div>
 
+<style>
+    /* Title Styling */
+    h3.text-primary {
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        color: #007bff;
+        text-align: center;
+        background: linear-gradient(90deg, #007bff, #00c6ff);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-size: 2rem;
+        padding-bottom: 10px;
+        border-bottom: 3px solid #007bff;
+        display: inline-block;
+        box-shadow: 0px 2px 5px rgba(0, 123, 255, 0.2);
+    }
+
+    /* Card Styling */
+    .card {
+        border-radius: 15px;
+        border: none;
+        box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.15);
+        background: #ffffff;
+        padding: 20px;
+    }
+
+        .card .btn {
+            border-radius: 10px;
+            transition: all 0.3s ease-in-out;
+        }
+
+    /* Form Elements */
+    .form-control {
+        border-radius: 10px;
+        transition: 0.3s;
+    }
+
+        .form-control:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 8px rgba(0, 123, 255, 0.5);
+        }
+
+    .input-group-text {
+        background-color: #007bff;
+        color: white;
+        border-radius: 10px 0 0 10px;
+    }
+
+    /* Buttons */
+    .btn {
+        transition: all 0.3s ease-in-out;
+        border-radius: 10px;
+    }
+
+        .btn:hover {
+            transform: scale(1.05);
+        }
+
+    .btn-primary {
+        background-color: #007bff;
+        border-color: #007bff;
+    }
+
+        .btn-primary:hover {
+            background-color: #0056b3;
+            border-color: #0056b3;
+        }
+
+    .btn-outline-secondary {
+        border-color: #6c757d;
+        color: #6c757d;
+    }
+
+        .btn-outline-secondary:hover {
+            background-color: #6c757d;
+            color: white;
+        }
+
+    /* Image Upload */
+    .img-thumbnail {
+        border-radius: 10px;
+        transition: 0.3s;
+        border: 2px solid #007bff;
+    }
+
+        .img-thumbnail:hover {
+            transform: scale(1.1);
+            box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.2);
+        }
+
+    /* Alerts */
+    .alert {
+        border-radius: 10px;
+    }
+
+    /* Loading Spinner */
+    .spinner-border {
+        width: 3rem;
+        height: 3rem;
+        border-width: 4px;
+    }
+
+</style>
+
 @code {
     private Product newProduct = new() { ImageUrl = "", CategoryId = 0 };
     private List<Category> categories = new();

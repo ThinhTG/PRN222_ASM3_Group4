@@ -7,7 +7,8 @@
 
     <main>
         <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
+            <a href="/login" class="auth-button login-button">Login</a>
+            <a href="/register" class="auth-button register-button">Register</a>
         </div>
 
         <article class="content px-4">
@@ -21,3 +22,111 @@
     <a href="" class="reload">Reload</a>
     <a class="dismiss">🗙</a>
 </div>
+
+<style>
+    /* Page container */
+    .page {
+        display: flex;
+        flex-direction: row;
+        min-height: 100vh;
+    }
+
+    /* Sidebar styling */
+    .sidebar {
+        width: 250px;
+        background-color: #1e293b; /* Dark slate */
+        flex-shrink: 0;
+    }
+
+    /* Main content area */
+    main {
+        flex: 1;
+        background-color: #f8fafc; /* Light gray */
+    }
+
+    /* Top row styling */
+    .top-row {
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        padding: 1rem;
+        background-color: #ffffff;
+        border-bottom: 1px solid #e2e8f0; /* Light gray border */
+    }
+
+    /* About link */
+    .about-link {
+        color: #4b5563; /* Gray */
+        text-decoration: none;
+        margin-right: 20px;
+        font-weight: 500;
+        transition: color 0.2s ease;
+    }
+
+    .about-link:hover {
+        color: #1f2937; /* Darker gray */
+        text-decoration: underline;
+    }
+
+    /* Auth buttons (shared styles) */
+    .auth-button {
+        padding: 8px 16px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 0.95rem;
+        transition: all 0.3s ease;
+        display: inline-block;
+    }
+
+    /* Login button */
+    .login-button {
+        background: linear-gradient(to right, #ed8936, #f56565); /* Orange to red */
+        color: #ffffff;
+        margin-right: 10px;
+    }
+
+    .login-button:hover {
+        background: linear-gradient(to right, #f56565, #ed8936); /* Reverse gradient */
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Register button */
+    .register-button {
+        background: linear-gradient(to right, #6b7280, #3b82f6); /* Gray to blue */
+        color: #ffffff;
+    }
+
+    .register-button:hover {
+        background: linear-gradient(to right, #3b82f6, #6b7280); /* Reverse gradient */
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Content area */
+    .content {
+        padding: 1rem;
+    }
+
+    /* Error UI (unchanged but styled for consistency) */
+    #blazor-error-ui {
+        background-color: #fee2e2; /* Light red */
+        color: #dc2626; /* Bright red */
+        padding: 1rem;
+        text-align: center;
+        position: fixed;
+        bottom: 0;
+        width: 100%;
+    }
+
+    #blazor-error-ui .reload,
+    #blazor-error-ui .dismiss {
+        color: #dc2626;
+        margin-left: 10px;
+        text-decoration: none;
+    }
+
+    #blazor-error-ui .reload:hover,
+    #blazor-error-ui .dismiss:hover {
+        text-decoration: underline;
+    }
+</style>

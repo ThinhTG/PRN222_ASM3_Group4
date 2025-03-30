@@ -131,6 +131,84 @@
     }
 </div>
 
+<style>
+    .container {
+        max-width: 800px;
+        margin: auto;
+        padding: 20px;
+        background-color: #f8f9fa;
+        border-radius: 10px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    h3.text-primary {
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        color: #007bff;
+        text-align: center;
+        background: linear-gradient(90deg, #007bff, #00c6ff);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-size: 2rem;
+        padding-bottom: 10px;
+        border-bottom: 3px solid #007bff;
+        display: inline-block;
+        box-shadow: 0px 2px 5px rgba(0, 123, 255, 0.2);
+    }
+
+    .card {
+        background: #fff;
+        border-radius: 10px;
+        padding: 20px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .form-label {
+        font-weight: 600;
+    }
+
+    .form-control, .form-select {
+        border-radius: 8px;
+        padding: 10px;
+    }
+
+    .btn {
+        padding: 10px 16px;
+        border-radius: 8px;
+        font-weight: 600;
+    }
+
+    .btn-primary {
+        background-color: #007bff;
+        border: none;
+    }
+
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+
+    .btn-outline-secondary {
+        border-color: #6c757d;
+        color: #6c757d;
+    }
+
+        .btn-outline-secondary:hover {
+            background-color: #6c757d;
+            color: white;
+        }
+
+    .img-thumbnail {
+        border-radius: 10px;
+        margin-top: 10px;
+    }
+
+    .spinner-border {
+        width: 2rem;
+        height: 2rem;
+    }
+
+</style>
 @code {
     [Parameter]
     public int Id { get; set; }

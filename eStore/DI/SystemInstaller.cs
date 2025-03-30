@@ -4,6 +4,8 @@ using DataAccess.DBContext;
 using DataAccess.Mapping;
 using Microsoft.EntityFrameworkCore;
 using CloudinaryDotNet;
+using Services.DTOs;
+using BusinessObject.Models;
 
 namespace eStore.DI
 {
@@ -33,7 +35,33 @@ namespace eStore.DI
 
             // Register AutoMapper
             services.AddAutoMapper(typeof(MappingProfile).Assembly);
+            // Tạo tài khoản Admin mặc định
+            using (var scope = services.BuildServiceProvider().CreateScope())
+            {
+                var context = scope.ServiceProvider.GetRequiredService<eStoreContext>();
+                CreateDefaultAdmin(context);
+            }
+        }
+        private void CreateDefaultAdmin(eStoreContext context)
+        {
+            if (!context.Members.Any(m => m.Role == "Admin"))
+            {
+                string adminEmail = "admin@estore.com";
+                string adminPassword = BCrypt.Net.BCrypt.HashPassword("Admin@123");
 
+                var adminUser = new Member
+                {
+                    Email = adminEmail,
+                    Password = adminPassword,
+                    CompanyName = "eStore Admin",
+                    City = "Hanoi",
+                    Country = "Vietnam",
+                    Role = "Admin"
+                };
+
+                context.Members.Add(adminUser);
+                context.SaveChanges();
+            }
         }
     }
 }
