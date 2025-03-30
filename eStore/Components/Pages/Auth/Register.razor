@@ -1,0 +1,211 @@
+﻿@page "/register"
+@using Services.Service
+@using Services.DTOs
+
+@inject AuthService AuthService
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <p style="color:red">@errorMessage</p>
+}
+
+@if (!string.IsNullOrEmpty(successMessage))
+{
+    <p style="color:green">@successMessage</p>
+}
+
+<div class="register-container">
+    <div class="register-card">
+        <h3 class="register-title">Create Your Account</h3>
+        <p class="register-subtitle">Register to get started</p>
+
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <p class="error-message">@errorMessage</p>
+        }
+
+        @if (!string.IsNullOrEmpty(successMessage))
+        {
+            <p class="success-message">@successMessage</p>
+        }
+
+        <div class="form-container">
+            <input class="input-field" @bind="Email" placeholder="Email" type="email" />
+            <input class="input-field" @bind="CompanyName" placeholder="Company Name" />
+            <input class="input-field" @bind="City" placeholder="City" />
+            <input class="input-field" @bind="Country" placeholder="Country" />
+            <input class="input-field" @bind="Password" type="password" placeholder="Password" />
+            <button class="register-button" @onclick="HandleRegister">Register</button>
+        </div>
+
+        <p class="login-text">
+            Already have an account? <a href="/login" class="login-link">Login</a>
+        </p>
+    </div>
+</div>
+
+@code {
+    private string Email { get; set; }
+    private string CompanyName { get; set; }
+    private string City { get; set; }
+    private string Country { get; set; }
+    private string Password { get; set; }
+    private string errorMessage;
+    private string successMessage;
+
+    private async Task HandleRegister()
+    {
+        var registerRequest = new RegisterDTO
+            {
+                Email = Email,
+                CompanyName = CompanyName,
+                City = City,
+                Country = Country,
+                Password = Password
+            };
+
+        var result = await AuthService.RegisterAsync(registerRequest);
+
+        if (result)
+        {
+            successMessage = "Registration successful! Redirecting to login...";
+            await Task.Delay(1000);
+            Navigation.NavigateTo("/login");
+        }
+        else
+        {
+            errorMessage = "Email is already in use!";
+        }
+    }
+}
+<style>
+    /* Container for the entire page */
+    .register-container {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #fff7f0, #ffe8d6); /* Light peach gradient */
+    }
+
+    /* Register card styling */
+    .register-card {
+        background-color: #ffffff;
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+        border-radius: 20px;
+        padding: 40px;
+        width: 100%;
+        max-width: 400px;
+        text-align: center;
+        transition: transform 0.3s ease;
+    }
+
+        .register-card:hover {
+            transform: scale(1.05);
+        }
+
+    /* Title styling */
+    .register-title {
+        font-size: 2rem;
+        font-weight: 800;
+        color: #4c1d95; /* Deep purple */
+        margin-bottom: 8px;
+    }
+
+    /* Subtitle styling */
+    .register-subtitle {
+        font-size: 0.9rem;
+        color: #718096; /* Slate gray */
+        margin-bottom: 20px;
+    }
+
+    /* Error message styling */
+    .error-message {
+        color: #dc2626; /* Bright red */
+        background-color: #fee2e2; /* Light red */
+        padding: 8px;
+        border-radius: 8px;
+        margin-top: 16px;
+        font-size: 0.95rem;
+    }
+
+    /* Success message styling */
+    .success-message {
+        color: #15803d; /* Green */
+        background-color: #dcfce7; /* Light green */
+        padding: 8px;
+        border-radius: 8px;
+        margin-top: 16px;
+        font-size: 0.95rem;
+    }
+
+    /* Form container */
+    .form-container {
+        margin-top: 30px;
+        display: flex;
+        flex-direction: column;
+        gap: 20px; /* Vertical spacing between inputs */
+    }
+
+    /* Input fields */
+    .input-field {
+        width: 100%;
+        padding: 12px 16px;
+        border: 2px solid #e2e8f0; /* Light gray border */
+        border-radius: 10px;
+        background-color: #f7fafc; /* Off-white */
+        color: #1a202c; /* Dark gray text */
+        font-size: 1rem;
+        transition: all 0.2s ease;
+    }
+
+        .input-field::placeholder {
+            color: #a0aec0; /* Muted gray */
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: #7c3aed; /* Vibrant purple */
+            box-shadow: 0 0 8px rgba(124, 58, 237, 0.5); /* Glow effect */
+        }
+
+    /* Register button */
+    .register-button {
+        width: 100%;
+        padding: 12px;
+        background: linear-gradient(to right, #6b7280, #3b82f6); /* Gray to blue gradient */
+        color: #ffffff;
+        border: none;
+        border-radius: 10px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+
+        .register-button:hover {
+            background: linear-gradient(to right, #3b82f6, #6b7280); /* Reverse gradient on hover */
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+
+    /* Login text and link */
+    .login-text {
+        margin-top: 20px;
+        font-size: 0.9rem;
+        color: #4a5568; /* Dark gray */
+    }
+
+    .login-link {
+        color: #d97706; /* Amber */
+        text-decoration: none;
+        transition: color 0.2s ease;
+    }
+
+        .login-link:hover {
+            color: #b45309; /* Darker amber */
+            text-decoration: underline;
+        }
+</style>

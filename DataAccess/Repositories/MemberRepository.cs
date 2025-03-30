@@ -1,40 +1,50 @@
 using BusinessObject.Models;
 using DataAccess.InterfaceRepo;
 using DataAccess.DBContext;
+using Microsoft.EntityFrameworkCore;
 
 namespace DataAccess.Repositories;
 public class MemberRepository : IMemberRepository
 {
-
     private readonly eStoreContext _context;
     public MemberRepository(eStoreContext context)
     {
         _context = context;
     }
 
-    public IEnumerable<Member> GetMembers() => _context.Members.ToList();
-
-    public Member GetMemberById(int id) => _context.Members.Find(id);
-
-    public void AddMember(Member member)
+    public async Task<IEnumerable<Member>> GetMembersAsync()
     {
-        _context.Members.Add(member);
-        _context.SaveChanges();
+        return await _context.Members.ToListAsync();
     }
 
-    public void UpdateMember(Member member)
+    public async Task<Member> GetMemberByIdAsync(int id)
+    {
+        return await _context.Members.FindAsync(id);
+    }
+
+    public async Task AddMemberAsync(Member member)
+    {
+        await _context.Members.AddAsync(member);
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task UpdateMemberAsync(Member member)
     {
         _context.Members.Update(member);
-        _context.SaveChanges();
+        await _context.SaveChangesAsync();
     }
 
-    public void DeleteMember(int id)
+    public async Task DeleteMemberAsync(int id)
     {
-        var member = _context.Members.Find(id);
+        var member = await _context.Members.FindAsync(id);
         if (member != null)
         {
             _context.Members.Remove(member);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
         }
+    }
+    public async Task<Member> GetMemberByEmailAsync(string email)
+    {
+        return await _context.Members.FirstOrDefaultAsync(m => m.Email == email);
     }
 }

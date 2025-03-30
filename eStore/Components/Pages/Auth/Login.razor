@@ -1,0 +1,199 @@
+﻿@page "/login"
+@using Microsoft.AspNetCore.Components.Authorization
+@using Services.DTOs
+@using Services.Service
+@using System.IdentityModel.Tokens.Jwt
+@using System.Security.Claims
+
+@inject Services.Service.AuthService AuthService
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+
+<div class="login-container">
+    <div class="login-card">
+        <h2 class="login-title">Welcome Back</h2>
+        <p class="login-subtitle">Login to access your account</p>
+
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <p class="error-message">@errorMessage</p>
+        }
+
+        <div class="form-container">
+            <input class="input-field"
+                   @bind="Email"
+                   placeholder="Email"
+                   type="email" />
+
+            <input class="input-field"
+                   @bind="Password"
+                   type="password"
+                   placeholder="Password" />
+
+            <button class="login-button" @onclick="HandleLogin">
+                Login
+            </button>
+        </div>
+
+        <p class="signup-text">
+            Don’t have an account? <a href="/register" class="signup-link">Sign up</a>
+        </p>
+    </div>
+</div>
+
+<style>
+    /* Container for the entire page */
+    .login-container {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #f0f4ff, #d9e2ff); /* Light blue gradient */
+    }
+
+    /* Login card styling */
+    .login-card {
+        background-color: #ffffff;
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+        border-radius: 20px;
+        padding: 40px;
+        width: 100%;
+        max-width: 400px;
+        text-align: center;
+        transition: transform 0.3s ease;
+    }
+
+        .login-card:hover {
+            transform: scale(1.05);
+        }
+
+    /* Title styling */
+    .login-title {
+        font-size: 2rem;
+        font-weight: 800;
+        color: #2a4365; /* Deep blue */
+        margin-bottom: 8px;
+    }
+
+    /* Subtitle styling */
+    .login-subtitle {
+        font-size: 0.9rem;
+        color: #718096; /* Slate gray */
+        margin-bottom: 20px;
+    }
+
+    /* Error message styling */
+    .error-message {
+        color: #dc2626; /* Bright red */
+        background-color: #fee2e2; /* Light red */
+        padding: 8px;
+        border-radius: 8px;
+        margin-top: 16px;
+        font-size: 0.95rem;
+    }
+
+    /* Form container */
+    .form-container {
+        margin-top: 30px;
+        display: flex;
+        flex-direction: column;
+        gap: 20px; /* Vertical spacing between inputs */
+    }
+
+    /* Input fields */
+    .input-field {
+        width: 100%;
+        padding: 12px 16px;
+        border: 2px solid #e2e8f0; /* Light gray border */
+        border-radius: 10px;
+        background-color: #f7fafc; /* Off-white */
+        color: #1a202c; /* Dark gray text */
+        font-size: 1rem;
+        transition: all 0.2s ease;
+    }
+
+        .input-field::placeholder {
+            color: #a0aec0; /* Muted gray */
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: #4299e1; /* Sky blue */
+            box-shadow: 0 0 8px rgba(66, 153, 225, 0.5); /* Glow effect */
+        }
+
+    /* Login button */
+    .login-button {
+        width: 100%;
+        padding: 12px;
+        background: linear-gradient(to right, #ed8936, #f56565); /* Orange to red gradient */
+        color: #ffffff;
+        border: none;
+        border-radius: 10px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+
+        .login-button:hover {
+            background: linear-gradient(to right, #f56565, #ed8936); /* Reverse gradient on hover */
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+
+    /* Signup text and link */
+    .signup-text {
+        margin-top: 20px;
+        font-size: 0.9rem;
+        color: #4a5568; /* Dark gray */
+    }
+
+    .signup-link {
+        color: #48bb78; /* Green */
+        text-decoration: none;
+        transition: color 0.2s ease;
+    }
+
+        .signup-link:hover {
+            color: #2f855a; /* Darker green */
+            text-decoration: underline;
+        }
+</style>
+
+@code {
+    private string Email { get; set; }
+    private string Password { get; set; }
+    private string errorMessage;
+
+    private async Task HandleLogin()
+    {
+        var loginRequest = new LoginDTO { Email = Email, Password = Password };
+        var response = await AuthService.LoginAsync(loginRequest);
+
+        if (response != null)
+        {
+            var customAuthStateProvider = (CustomAuthStateProvider)AuthStateProvider;
+            await customAuthStateProvider.LoginAsync(response);
+
+            var handler = new JwtSecurityTokenHandler();
+            var tokenS = handler.ReadJwtToken(response.Token);
+            var roleClaim = tokenS.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role);
+            var role = roleClaim?.Value ?? "Customer";
+
+            if (role == "Admin")
+            {
+                Navigation.NavigateTo("/members");
+            }
+            else
+            {
+                Navigation.NavigateTo("/products");
+            }
+        }
+        else
+        {
+            errorMessage = "Invalid email or password!";
+        }
+    }
+}
