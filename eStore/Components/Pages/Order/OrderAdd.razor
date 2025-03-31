@@ -39,7 +39,7 @@
     else
     {
         <div class="card shadow-sm p-4">
-            <EditForm Model="newOrder" OnValidSubmit="AddOrder">
+            <EditForm Model="newOrder" OnValidSubmit="AddOrder" FormName="AddOrderForm">
                 <DataAnnotationsValidator />
                 <div class="row">
                     <div class="col-md-6">
@@ -85,7 +85,7 @@
                     </div>
                 </div>
                 <div class="d-flex gap-2">
-                    <button class="btn btn-primary" type="submit">
+                    <button class="btn btn-primary" type="submit" disabled="@isLoading">
                         <i class="bi bi-plus-circle me-2"></i>Add Order
                     </button>
                     <NavLink class="btn btn-outline-secondary" href="/orders">
@@ -100,14 +100,15 @@
 @code {
     private Order newOrder = new() { OrderDate = DateTime.Now }; // Default to current date
     private List<Member> members = new();
-    private string? errorMessage, successMessage;
+    private string? errorMessage;
+    private string? successMessage;
     private bool isLoading = true;
 
     protected override async Task OnInitializedAsync()
     {
         try
         {
-            members = MemberService.GetAllMembers().ToList();
+            members = (await MemberService.GetAllMembersAsync()).ToList();
             if (!members.Any())
             {
                 errorMessage = "No members available. Please add a member first.";
@@ -134,12 +135,19 @@
 
         try
         {
-            OrderService.CreateOrder(newOrder);
+            isLoading = true;
+            await OrderService.CreateOrder(newOrder);
+            successMessage = "Order added successfully!";
             Navigation.NavigateTo("/orders");
         }
         catch (Exception ex)
         {
             errorMessage = $"Error adding order: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
         }
     }
 }

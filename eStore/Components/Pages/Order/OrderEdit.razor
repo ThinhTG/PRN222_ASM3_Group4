@@ -130,7 +130,7 @@
             }
 
             // Fetch the members
-            members = (MemberService.GetAllMembers()).ToList();
+            members = (await MemberService.GetAllMembersAsync()).ToList();
             if (!members.Any())
             {
                 errorMessage = "No members available. Please add a member first.";

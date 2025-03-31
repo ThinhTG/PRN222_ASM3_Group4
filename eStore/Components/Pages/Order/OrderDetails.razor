@@ -155,7 +155,7 @@ else
 
             if (order != null)
             {
-                member =  MemberService.GetMemberById(order.MemberId); // Added await
+                member =  await MemberService.GetMemberByIdAsync(order.MemberId); 
                 orderDetails = await OrderDetailService.GetOrderDetails(OrderId);
 
                 if (orderDetails != null)
