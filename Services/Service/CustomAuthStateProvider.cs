@@ -39,6 +39,23 @@ namespace Services.Service
             return new AuthenticationState(_currentUser);
         }
 
+        public async Task<string?> GetUserRoleAsync()
+        {
+            var token = await _jsRuntime.InvokeAsync<string>("sessionStorage.getItem", "authToken");
+            if (string.IsNullOrEmpty(token))
+                return null;
+
+            var handler = new JwtSecurityTokenHandler();
+            var jwtToken = handler.ReadJwtToken(token);
+
+            var roleClaim = jwtToken.Claims.FirstOrDefault(c =>
+                c.Type == "http://schemas.microsoft.com/ws/2008/06/identity/claims/role");
+
+            return roleClaim?.Value;
+        }
+
+
+
         public async Task LoginAsync(LoginResponseDTO res)
         {
             await _jsRuntime.InvokeVoidAsync("sessionStorage.setItem", "authToken", res.Token);
