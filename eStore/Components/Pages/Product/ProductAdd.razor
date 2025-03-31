@@ -7,7 +7,13 @@
 @inject NavigationManager Navigation
 @inject Cloudinary Cloudinary
 @rendermode InteractiveServer
+@inject Services.Service.CustomAuthStateProvider Auth
 
+
+@if (!IsAdmin)
+{
+    <h3>you dont have access to do this function</h3>
+}
 <div class="container mt-4">
     <h3 class="mb-4 text-primary">Add New Product</h3>
 
@@ -109,9 +115,9 @@
                     </div>
                 </div>
                 <div class="d-flex gap-2">
-                    <button class="btn btn-primary" type="submit" disabled="@isUploading">
-                        <i class="bi bi-plus-circle me-2"></i>Add Product
-                    </button>
+                     <button class="btn btn-primary" type="submit" disabled="@(!IsAdmin)">
+                         <i class="bi bi-plus-circle me-2"></i>Add Product
+                     </button>
                     <NavLink class="btn btn-outline-secondary" href="/products">
                         <i class="bi bi-x-circle me-2"></i>Cancel
                     </NavLink>
@@ -232,6 +238,9 @@
     private string? errorMessage, successMessage;
     private bool isUploading;
     private bool isLoading = true;
+    private string? userRole;
+    private bool IsAdmin => userRole == "Admin";
+
 
     protected override async Task OnInitializedAsync()
     {
@@ -253,6 +262,15 @@
             StateHasChanged();
         }
     }
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            userRole = await Auth.GetUserRoleAsync();
+            StateHasChanged(); // Trigger re-rendering after retrieving the role
+        }
+    }
+
 
     private async Task HandleFileSelected(InputFileChangeEventArgs e)
     {
@@ -321,8 +339,12 @@
 
         try
         {
-            ProductService.Add(newProduct);
-            Navigation.NavigateTo("/products");
+            if (IsAdmin)
+            {
+                ProductService.Add(newProduct);
+                Navigation.NavigateTo("/products");
+            }
+          
         }
         catch (Exception ex)
         {
