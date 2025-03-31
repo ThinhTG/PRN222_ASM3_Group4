@@ -1,0 +1,145 @@
+@page "/orders/add"
+@using BusinessObject.Models
+@inject Services.InterfaceService.IOrderService OrderService
+@inject Services.InterfaceService.IMemberService MemberService
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+
+<div class="container mt-4">
+    <h3 class="mb-4 text-primary">Add New Order</h3>
+
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @errorMessage
+            <button type="button" class="btn-close" @onclick="() => errorMessage = null"></button>
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(successMessage))
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @successMessage
+            <button type="button" class="btn-close" @onclick="() => successMessage = null"></button>
+        </div>
+    }
+
+    @if (isLoading)
+    {
+        <div class="text-center my-3">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    }
+    else if (members == null || !members.Any())
+    {
+        <div class="alert alert-warning">No members available. Please add a member first.</div>
+    }
+    else
+    {
+        <div class="card shadow-sm p-4">
+            <EditForm Model="newOrder" OnValidSubmit="AddOrder">
+                <DataAnnotationsValidator />
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label"><i class="bi bi-person me-2"></i>Member</label>
+                            <InputSelect class="form-control" @bind-Value="newOrder.MemberId">
+                                <option value="0" disabled selected>Select a member</option>
+                                @foreach (var member in members)
+                                {
+                                    <option value="@member.MemberId">@member.Email</option>
+                                }
+                            </InputSelect>
+                            <ValidationMessage For="@(() => newOrder.MemberId)" class="text-danger" />
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label"><i class="bi bi-calendar me-2"></i>Order Date</label>
+                            <InputDate class="form-control" @bind-Value="newOrder.OrderDate" />
+                            <ValidationMessage For="@(() => newOrder.OrderDate)" class="text-danger" />
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label"><i class="bi bi-calendar-check me-2"></i>Required Date</label>
+                            <InputDate class="form-control" @bind-Value="newOrder.RequiredDate" />
+                            <ValidationMessage For="@(() => newOrder.RequiredDate)" class="text-danger" />
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label"><i class="bi bi-truck me-2"></i>Shipped Date</label>
+                            <InputDate class="form-control" @bind-Value="newOrder.ShippedDate" />
+                            <ValidationMessage For="@(() => newOrder.ShippedDate)" class="text-danger" />
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label"><i class="bi bi-currency-dollar me-2"></i>Freight</label>
+                            <InputNumber class="form-control" @bind-Value="newOrder.Freight" />
+                            <ValidationMessage For="@(() => newOrder.Freight)" class="text-danger" />
+                        </div>
+                    </div>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-primary" type="submit">
+                        <i class="bi bi-plus-circle me-2"></i>Add Order
+                    </button>
+                    <NavLink class="btn btn-outline-secondary" href="/orders">
+                        <i class="bi bi-x-circle me-2"></i>Cancel
+                    </NavLink>
+                </div>
+            </EditForm>
+        </div>
+    }
+</div>
+
+@code {
+    private Order newOrder = new() { OrderDate = DateTime.Now }; // Default to current date
+    private List<Member> members = new();
+    private string? errorMessage, successMessage;
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            members = MemberService.GetAllMembers().ToList();
+            if (!members.Any())
+            {
+                errorMessage = "No members available. Please add a member first.";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error loading members: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task AddOrder()
+    {
+        if (newOrder.MemberId == 0)
+        {
+            errorMessage = "Please select a member.";
+            return;
+        }
+
+        try
+        {
+            OrderService.CreateOrder(newOrder);
+            Navigation.NavigateTo("/orders");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error adding order: {ex.Message}";
+        }
+    }
+}

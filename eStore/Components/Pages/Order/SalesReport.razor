@@ -1,0 +1,240 @@
+@page "/sales-report"
+@using BusinessObject.Models
+@using Services.InterfaceService
+@using Microsoft.AspNetCore.Authorization
+@inject IOrderService OrderService
+@inject IOrderDetailService OrderDetailService
+@inject IProductService ProductService
+@* @attribute [Authorize(Roles = "Admin")] *@
+
+<h3>Sales Report</h3>
+
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>Date Range Selection</h5>
+            </div>
+            <div class="card-body">
+                <div class="form-group">
+                    <label for="startDate">Start Date:</label>
+                    <input type="date" id="startDate" class="form-control" @bind="startDate" />
+                </div>
+                <div class="form-group mt-2">
+                    <label for="endDate">End Date:</label>
+                    <input type="date" id="endDate" class="form-control" @bind="endDate" />
+                </div>
+                <button class="btn btn-primary mt-3" @onclick="GenerateReport">Generate Report</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (loading)
+{
+    <p><em>Loading report data...</em></p>
+}
+else if (reportGenerated)
+{
+    <h4>Sales Report from @startDate.ToString("dd/MM/yyyy") to @endDate.ToString("dd/MM/yyyy")</h4>
+
+    @if (!salesData.Any())
+    {
+        <div class="alert alert-info">No sales data found for the selected period.</div>
+    }
+    else
+    {
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="card bg-info text-white">
+                    <div class="card-body">
+                        <h5 class="card-title">Total Orders</h5>
+                        <h3>@salesData.Count()</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card bg-success text-white">
+                    <div class="card-body">
+                        <h5 class="card-title">Total Revenue</h5>
+                        <h3>@totalRevenue.ToString("C")</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card bg-warning">
+                    <div class="card-body">
+                        <h5 class="card-title">Average Order Value</h5>
+                        <h3>@(salesData.Any() ? (totalRevenue / salesData.Count()).ToString("C") : "$0.00")</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <h5>Orders by Date (Sorted by Sales Value)</h5>
+        <table class="table table-striped">
+            <thead>
+            <tr>
+                <th>Order ID</th>
+                <th>Order Date</th>
+                <th>Member ID</th>
+                <th>Items Count</th>
+                <th>Total Sales</th>
+                <th>Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+            @foreach (var orderSummary in orderSummaries.OrderByDescending(o => o.TotalSales))
+            {
+                <tr>
+                    <td>@orderSummary.OrderId</td>
+                    <td>@orderSummary.OrderDate.ToString("dd/MM/yyyy")</td>
+                    <td>@orderSummary.MemberId</td>
+                    <td>@orderSummary.ItemCount</td>
+                    <td>@orderSummary.TotalSales.ToString("C")</td>
+                    <td>
+                        <a href="/orders/details/@orderSummary.OrderId" class="btn btn-info btn-sm">View Details</a>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+
+        <h5>Product Performance</h5>
+        <table class="table table-striped">
+            <thead>
+            <tr>
+                <th>Product ID</th>
+                <th>Product Name</th>
+                <th>Units Sold</th>
+                <th>Total Revenue</th>
+            </tr>
+            </thead>
+            <tbody>
+            @foreach (var product in productPerformance.OrderByDescending(p => p.TotalRevenue))
+            {
+                <tr>
+                    <td>@product.ProductId</td>
+                    <td>@product.ProductName</td>
+                    <td>@product.UnitsSold</td>
+                    <td>@product.TotalRevenue.ToString("C")</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    }
+}
+
+@code {
+    private DateTime startDate = DateTime.Now.AddMonths(-1);
+    private DateTime endDate = DateTime.Now;
+    private bool loading = false;
+    private bool reportGenerated = false;
+    private IEnumerable<Order> salesData = new List<Order>();
+    private decimal totalRevenue = 0;
+    private List<OrderSummary> orderSummaries = new List<OrderSummary>();
+    private List<ProductPerformance> productPerformance = new List<ProductPerformance>();
+
+    private class OrderSummary
+    {
+        public int OrderId { get; set; }
+        public DateTime OrderDate { get; set; }
+        public int MemberId { get; set; }
+        public int ItemCount { get; set; }
+        public decimal TotalSales { get; set; }
+    }
+
+    private class ProductPerformance
+    {
+        public int ProductId { get; set; }
+        public string ProductName { get; set; }
+        public int UnitsSold { get; set; }
+        public decimal TotalRevenue { get; set; }
+    }
+
+    private async Task GenerateReport()
+    {
+        loading = true;
+        reportGenerated = false;
+
+        try
+        {
+            // Ensure end date includes the whole day
+            var adjustedEndDate = endDate.AddDays(1).AddSeconds(-1);
+
+            // Get orders within date range
+            salesData = await OrderService.GetSalesReport(startDate, adjustedEndDate);
+
+            // Reset counters
+            totalRevenue = 0;
+            orderSummaries.Clear();
+            productPerformance.Clear();
+
+            // Process each order
+            foreach (var order in salesData)
+            {
+                var orderDetails = await OrderDetailService.GetOrderDetails(order.OrderId);
+
+                // Calculate total sales for this order
+                decimal orderTotal = 0;
+                int itemCount = 0;
+
+                foreach (var detail in orderDetails)
+                {
+                    decimal itemTotal = detail.UnitPrice * detail.Quantity * (1 - (decimal)detail.Discount);
+                    orderTotal += itemTotal;
+                    itemCount += detail.Quantity;
+
+                    // Track product performance
+                    var product = ProductService.GetById(detail.ProductId);
+
+                    var existingProduct = productPerformance.FirstOrDefault(p => p.ProductId == detail.ProductId);
+                    if (existingProduct != null)
+                    {
+                        existingProduct.UnitsSold += detail.Quantity;
+                        existingProduct.TotalRevenue += itemTotal;
+                    }
+                    else
+                    {
+                        productPerformance.Add(new ProductPerformance
+                        {
+                            ProductId = detail.ProductId,
+                            ProductName = product?.ProductName ?? "Unknown Product",
+                            UnitsSold = detail.Quantity,
+                            TotalRevenue = itemTotal
+                        });
+                    }
+                }
+
+                // Add freight to order total if it exists
+                if (order.Freight.HasValue)
+                {
+                    orderTotal += order.Freight.Value;
+                }
+
+                // Add to total revenue
+                totalRevenue += orderTotal;
+
+                // Add order summary
+                orderSummaries.Add(new OrderSummary
+                {
+                    OrderId = order.OrderId,
+                    OrderDate = order.OrderDate, // Removed ?? operator as OrderDate is non-nullable
+                    MemberId = order.MemberId,
+                    ItemCount = itemCount,
+                    TotalSales = orderTotal
+                });
+            }
+
+            reportGenerated = true;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error generating sales report: {ex.Message}");
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+}

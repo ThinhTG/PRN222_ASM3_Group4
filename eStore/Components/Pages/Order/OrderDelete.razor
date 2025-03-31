@@ -1,0 +1,253 @@
+@page "/orders/delete/{Id:int}"
+@using BusinessObject.Models
+@inject Services.InterfaceService.IOrderService OrderService
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+
+<div class="container mt-5">
+    <h3 class="mb-4 text-danger fw-bold">Confirm Order Deletion</h3>
+
+    @if (order == null)
+    {
+        <div class="text-center my-5">
+            <div class="spinner-border text-danger" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="text-muted mt-2">Loading order details...</p>
+        </div>
+    }
+    else if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @errorMessage
+            <button type="button" class="btn-close" @onclick="() => errorMessage = null"></button>
+        </div>
+    }
+    else
+    {
+        <div class="card shadow-lg border-0 rounded-3 p-4 animate__animated animate__fadeIn">
+            <div class="row g-4">
+                <div class="col-md-12">
+                    <h5 class="text-danger mb-3">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        Are you sure you want to delete this order?
+                    </h5>
+                    <div class="alert alert-warning">
+                        <i class="bi bi-info-circle me-2"></i>
+                        This action cannot be undone. All order details associated with this order will also be deleted.
+                    </div>
+                    <hr class="my-4" style="border-color: #dee2e6;" />
+                    <dl class="row mb-4">
+                        <dt class="col-sm-3 text-muted">Order ID</dt>
+                        <dd class="col-sm-9 text-dark">@order.OrderId</dd>
+
+                        <dt class="col-sm-3 text-muted">Order Date</dt>
+                        <dd class="col-sm-9 text-dark">@order.OrderDate.ToString("MMMM dd, yyyy")</dd>
+
+                        <dt class="col-sm-3 text-muted">Member</dt>
+                        <dd class="col-sm-9 text-dark">
+                            @if (order.Member != null)
+                            {
+                                <span>@order.Member.Email</span>
+                            }
+                            else
+                            {
+                                <span class="text-muted">N/A</span>
+                            }
+                        </dd>
+
+                        <dt class="col-sm-3 text-muted">Required Date</dt>
+                        <dd class="col-sm-9 text-dark">
+                            @(order.RequiredDate?.ToString("MMMM dd, yyyy") ?? "N/A")
+                        </dd>
+
+                        <dt class="col-sm-3 text-muted">Shipped Date</dt>
+                        <dd class="col-sm-9 text-dark">
+                            @(order.ShippedDate?.ToString("MMMM dd, yyyy") ?? "Not shipped yet")
+                        </dd>
+
+                        @if (order.Freight.HasValue)
+                        {
+                            <dt class="col-sm-3 text-muted">Freight</dt>
+                            <dd class="col-sm-9 text-dark">@order.Freight.Value.ToString("C")</dd>
+                        }
+                    </dl>
+
+                    @if (order.OrderDetails != null && order.OrderDetails.Any())
+                    {
+                        <h6 class="mb-3">Order Items:</h6>
+                        <div class="table-responsive mb-4">
+                            <table class="table table-striped table-hover border">
+                                <thead class="table-light">
+                                <tr>
+                                    <th>Product</th>
+                                    <th>Quantity</th>
+                                    <th>Unit Price</th>
+                                    <th>Discount</th>
+                                    <th>Total</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                @foreach (var item in order.OrderDetails)
+                                {
+                                    <tr>
+                                        <td>@(item.Product?.ProductName ?? "Unknown")</td>
+                                        <td>@item.Quantity</td>
+                                        <td>@item.UnitPrice.ToString("C")</td>
+                                        <td>@(item.Discount * 100)%</td>
+                                        <td>@CalculateItemTotal(item).ToString("C")</td>
+                                    </tr>
+                                }
+                                </tbody>
+                                <tfoot class="table-info">
+                                <tr>
+                                    <th colspan="4" class="text-end">Order Total:</th>
+                                    <th>@CalculateOrderTotal().ToString("C")</th>
+                                </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    }
+
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-danger btn-lg px-4 shadow-sm" @onclick="ConfirmDelete" disabled="@isDeleting">
+                            @if (isDeleting)
+                            {
+                                <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                <span>Deleting...</span>
+                            }
+                            else
+                            {
+                                <i class="bi bi-trash me-2"></i>
+                                <span>Delete Order</span>
+                            }
+                        </button>
+                        <NavLink class="btn btn-outline-secondary btn-lg px-4 shadow-sm" href="/orders">
+                            <i class="bi bi-x-circle me-2"></i>Cancel
+                        </NavLink>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<style>
+    .card {
+        background-color: #fff;
+        transition: transform 0.2s ease, box-shadow 0.3s ease;
+    }
+
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1) !important;
+    }
+
+    .badge {
+        font-size: 0.9rem;
+        padding: 0.5em 1em;
+    }
+
+    .btn-lg {
+        font-size: 1.1rem;
+        border-radius: 8px;
+    }
+
+    .text-danger {
+        color: #dc3545 !important;
+    }
+
+    .text-success {
+        color: #28a745 !important;
+    }
+
+    .text-dark {
+        color: #343a40 !important;
+    }
+
+    .text-muted {
+        color: #6c757d !important;
+    }
+
+    .table th, .table td {
+        vertical-align: middle;
+    }
+</style>
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private Order order;
+    private string errorMessage;
+    private bool isDeleting = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            order = await OrderService.GetOrderById(Id);
+            if (order == null)
+            {
+                errorMessage = "Order not found.";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error loading order: {ex.Message}";
+        }
+    }
+
+    private async Task ConfirmDelete()
+    {
+        try
+        {
+            isDeleting = true;
+            StateHasChanged();
+
+            await OrderService.DeleteOrder(Id);
+
+            // Add a small delay to show the delete animation
+            await Task.Delay(800);
+
+            Navigation.NavigateTo("/orders");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error deleting order: {ex.Message}";
+            isDeleting = false;
+            StateHasChanged();
+        }
+    }
+
+    // Helper method to calculate item total - handles the decimal and float type conversion
+    private decimal CalculateItemTotal(OrderDetail item)
+    {
+        if (item == null) return 0;
+
+        decimal discount = Convert.ToDecimal(item.Discount);
+        return item.UnitPrice * item.Quantity * (1 - discount);
+    }
+
+    // Helper method to calculate order total
+    private decimal CalculateOrderTotal()
+    {
+        if (order?.OrderDetails == null || !order.OrderDetails.Any())
+            return 0;
+
+        decimal total = 0;
+        foreach (var item in order.OrderDetails)
+        {
+            decimal discount = Convert.ToDecimal(item.Discount);
+            total += item.UnitPrice * item.Quantity * (1 - discount);
+        }
+
+        // Add freight if present
+        if (order.Freight.HasValue)
+        {
+            total += order.Freight.Value;
+        }
+
+        return total;
+    }
+}

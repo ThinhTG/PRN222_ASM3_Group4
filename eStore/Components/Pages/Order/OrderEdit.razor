@@ -1,0 +1,181 @@
+@page "/orders/edit/{id:int}"
+@using BusinessObject.Models
+@inject Services.InterfaceService.IOrderService OrderService
+@inject Services.InterfaceService.IMemberService MemberService
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+
+<div class="container mt-4">
+    <h3 class="mb-4 text-primary">Edit Order</h3>
+
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @errorMessage
+            <button type="button" class="btn-close" @onclick="() => errorMessage = null"></button>
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(successMessage))
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @successMessage
+            <button type="button" class="btn-close" @onclick="() => successMessage = null"></button>
+        </div>
+    }
+
+    @if (isLoading)
+    {
+        <div class="text-center my-3">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    }
+    else if (order == null)
+    {
+        <div class="alert alert-warning">Order not found.</div>
+    }
+    else if (members == null || !members.Any())
+    {
+        <div class="alert alert-warning">No members available. Please add a member first.</div>
+    }
+    else
+    {
+        <div class="card shadow-sm p-4">
+            <EditForm Model="order" OnValidSubmit="UpdateOrder">
+                <DataAnnotationsValidator />
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label"><i class="bi bi-hash me-2"></i>Order ID</label>
+                            <InputNumber class="form-control" @bind-Value="order.OrderId" readonly />
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label"><i class="bi bi-person me-2"></i>Member</label>
+                            <InputSelect class="form-control" @bind-Value="order.MemberId">
+                                <option value="0" disabled>Select a member</option>
+                                @foreach (var member in members)
+                                {
+                                    <option value="@member.MemberId">@member.Email</option>
+                                }
+                            </InputSelect>
+                            <ValidationMessage For="@(() => order.MemberId)" class="text-danger" />
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label"><i class="bi bi-calendar me-2"></i>Order Date</label>
+                            <InputDate class="form-control" @bind-Value="order.OrderDate" />
+                            <ValidationMessage For="@(() => order.OrderDate)" class="text-danger" />
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label"><i class="bi bi-calendar-check me-2"></i>Required Date</label>
+                            <InputDate class="form-control" @bind-Value="order.RequiredDate" />
+                            <ValidationMessage For="@(() => order.RequiredDate)" class="text-danger" />
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label"><i class="bi bi-truck me-2"></i>Shipped Date</label>
+                            <InputDate class="form-control" @bind-Value="order.ShippedDate" />
+                            <ValidationMessage For="@(() => order.ShippedDate)" class="text-danger" />
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label"><i class="bi bi-cash me-2"></i>Freight</label>
+                            <InputNumber class="form-control" @bind-Value="order.Freight" />
+                            <ValidationMessage For="@(() => order.Freight)" class="text-danger" />
+                        </div>
+                    </div>
+                </div>
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary" disabled="@isLoading">
+                        <i class="bi bi-save me-2"></i>Update Order
+                    </button>
+                    <NavLink class="btn btn-outline-secondary" href="/orders">
+                        <i class="bi bi-x-circle me-2"></i>Cancel
+                    </NavLink>
+                </div>
+            </EditForm>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private Order order;
+    private List<Member> members = new();
+    private string errorMessage;
+    private string successMessage;
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            // Fetch the order
+            order = await OrderService.GetOrderById(Id);
+            if (order == null)
+            {
+                errorMessage = "Order not found.";
+                return;
+            }
+
+            // Fetch the members
+            members = (MemberService.GetAllMembers()).ToList();
+            if (!members.Any())
+            {
+                errorMessage = "No members available. Please add a member first.";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error loading data: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task UpdateOrder()
+    {
+        if (order.MemberId == 0)
+        {
+            errorMessage = "Please select a member.";
+            return;
+        }
+
+        if (order.RequiredDate < order.OrderDate)
+        {
+            errorMessage = "Required date cannot be earlier than the order date.";
+            return;
+        }
+
+        try
+        {
+            isLoading = true;
+            await OrderService.UpdateOrder(order);
+            successMessage = "Order updated successfully!";
+            Navigation.NavigateTo("/orders");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error updating order: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+}

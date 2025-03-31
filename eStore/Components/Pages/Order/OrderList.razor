@@ -1,0 +1,111 @@
+@page "/orders"
+@using BusinessObject.Models
+@using Services.InterfaceService
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@inject IOrderService OrderService
+@inject NavigationManager NavigationManager
+@inject AuthenticationStateProvider AuthStateProvider
+@* @attribute [Authorize] *@
+
+<h3>Order List</h3>
+
+@if (loading)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div class="mb-3">
+        <a href="/orders/add" class="btn btn-primary">Create New Order</a>
+    </div>
+
+    @if (orders == null || !orders.Any())
+    {
+        <p>No orders found.</p>
+    }
+    else
+    {
+        <table class="table">
+            <thead>
+            <tr>
+                <th>Order ID</th>
+                <th>Member ID</th>
+                <th>Order Date</th>
+                <th>Required Date</th>
+                <th>Shipped Date</th>
+                <th>Freight</th>
+                <th>Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+            @foreach (var order in orders)
+            {
+                <tr>
+                    <td>@order.OrderId</td>
+                    <td>@order.MemberId</td>
+                    <td>@order.OrderDate.ToString("dd/MM/yyyy")</td>
+                    <td>@(order.RequiredDate.HasValue ? order.RequiredDate.Value.ToString("dd/MM/yyyy") : "N/A")</td>
+                    <td>@(order.ShippedDate.HasValue ? order.ShippedDate.Value.ToString("dd/MM/yyyy") : "N/A")</td>
+                    <td>@(order.Freight.HasValue ? order.Freight.Value.ToString("C") : "N/A")</td>
+                    <td>
+                        <a href="/orders/details/@order.OrderId" class="btn btn-info btn-sm">Details</a>
+                        @if (isAdmin)
+                        {
+                            <a href="/orders/edit/@order.OrderId" class="btn btn-warning btn-sm">Edit</a>
+                            <a href="/orders/delete/@order.OrderId" class="btn btn-danger btn-sm">Delete</a>
+                        }
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    }
+}
+
+@code {
+    private IEnumerable<Order> orders;
+    private bool loading = true;
+    private bool isAdmin = false;
+    private int currentMemberId = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        isAdmin = user.IsInRole("Admin");
+        var memberIdClaim = user.FindFirst("MemberId");
+        if (memberIdClaim != null)
+        {
+            currentMemberId = int.Parse(memberIdClaim.Value);
+        }
+
+        await LoadOrders();
+    }
+
+    private async Task LoadOrders()
+    {
+        try
+        {
+            if (isAdmin)
+            {
+                // Admin sees all orders
+                orders = await OrderService.GetAllOrders();
+            }
+            else
+            {
+                // Regular member only sees their orders
+                orders = (await OrderService.GetAllOrders()).Where(o => o.MemberId == currentMemberId);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading orders: {ex.Message}");
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+}
