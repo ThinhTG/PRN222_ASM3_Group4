@@ -16,14 +16,14 @@ public class OrderService : IOrderService
         _mapper = mapper;
     }
 
-    public async Task<IEnumerable<Order>> GetAllOrders()
-    {
-        return await _orderRepository.GetAllOrders();
-    }
-
     public async Task<Order> GetOrderById(int orderId)
     {
         return await _orderRepository.GetOrderById(orderId);
+    }
+
+    public async Task<IEnumerable<Order>> GetAllOrders()
+    {
+        return await _orderRepository.GetAllOrders();
     }
 
     public async Task CreateOrder(Order order)

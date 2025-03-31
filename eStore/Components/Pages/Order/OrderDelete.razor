@@ -91,7 +91,7 @@
                                 @foreach (var item in order.OrderDetails)
                                 {
                                     <tr>
-                                        <td>@(item.Product?.ProductName ?? "Unknown")</td>
+                                        <td>@(item.Product != null ? item.Product.ProductName : "Unknown Product")</td>
                                         <td>@item.Quantity</td>
                                         <td>@item.UnitPrice.ToString("C")</td>
                                         <td>@(item.Discount * 100)%</td>
@@ -101,8 +101,19 @@
                                 </tbody>
                                 <tfoot class="table-info">
                                 <tr>
-                                    <th colspan="4" class="text-end">Order Total:</th>
-                                    <th>@CalculateOrderTotal().ToString("C")</th>
+                                    <th class="text-start">Subtotal:</th>
+                                    <th colspan="3"></th>
+                                    <th>@CalculateSubtotal().ToString("C")</th>
+                                </tr>
+                                <tr>
+                                    <th class="text-start">Freight:</th>
+                                    <th colspan="3"></th>
+                                    <th>@(order.Freight?.ToString("C") ?? "N/A")</th>
+                                </tr>
+                                <tr>
+                                    <th class="text-start">Total:</th>
+                                    <th colspan="3"></th>
+                                    <th>@(order.Freight.HasValue ? (CalculateSubtotal() + order.Freight.Value).ToString("C") : CalculateSubtotal().ToString("C"))</th>
                                 </tr>
                                 </tfoot>
                             </table>
@@ -229,10 +240,27 @@
         return item.UnitPrice * item.Quantity * (1 - discount);
     }
 
+    // Helper method to calculate subtotal
+    private decimal CalculateSubtotal()
+    {
+        if (order?.OrderDetails == null || !order.OrderDetails.Any())
+            return 0;
+
+        decimal subtotal = 0;
+        foreach (var item in order.OrderDetails)
+        {
+            decimal discount = Convert.ToDecimal(item.Discount);
+            subtotal += item.UnitPrice * item.Quantity * (1 - discount);
+        }
+
+        return subtotal;
+    }
+
     // Helper method to calculate order total
     private decimal CalculateOrderTotal()
     {
         if (order?.OrderDetails == null || !order.OrderDetails.Any())
+
             return 0;
 
         decimal total = 0;

@@ -10,5 +10,7 @@ namespace Services.InterfaceService
         void Update(Product product);
         void Delete(int id);
         IEnumerable<Product> Search(string productName, decimal? unitPrice);
+        Task<Dictionary<int, string>> GetProductsByIds(IEnumerable<int> ids);
+        Task<IEnumerable<Product>> GetAllProducts();
     }
 }

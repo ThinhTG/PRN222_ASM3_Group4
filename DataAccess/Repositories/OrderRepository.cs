@@ -18,25 +18,42 @@ namespace DataAccess.Repositories
             _context = context;
         }
 
+        public async Task<Order> GetOrderById(int orderId)
+        {
+            // Eager loading cả Member và OrderDetails, bao gồm Product trong OrderDetails
+            var order = await _context.Orders
+                .Include(o => o.Member)
+                .Include(o => o.OrderDetails)
+                    .ThenInclude(od => od.Product) // Thêm dòng này để tải Product
+                .FirstOrDefaultAsync(o => o.OrderId == orderId);
+
+            if (order == null)
+            {
+                Console.WriteLine($"Order with ID {orderId} not found in database.");
+            }
+            else if (order.OrderDetails == null || !order.OrderDetails.Any())
+            {
+                Console.WriteLine($"Order {orderId} loaded but has no OrderDetails.");
+            }
+            else
+            {
+                Console.WriteLine($"Order {orderId} loaded with {order.OrderDetails.Count} OrderDetails.");
+            }
+
+            return order;
+        }
+
+        // Các phương thức khác giữ nguyên
         public async Task<IEnumerable<Order>> GetAllOrders()
         {
             return await _context.Orders
-                .Include(o => o.OrderDetails)
-                .ThenInclude(od => od.Product)
+                .Include(o => o.Member)
                 .ToListAsync();
-        }
-
-        public async Task<Order> GetOrderById(int orderId)
-        {
-            return await _context.Orders
-                .Include(o => o.OrderDetails)
-                .ThenInclude(od => od.Product)
-                .FirstOrDefaultAsync(o => o.OrderId == orderId);
         }
 
         public async Task AddOrder(Order order)
         {
-            await _context.Orders.AddAsync(order);
+            _context.Orders.Add(order);
             await _context.SaveChangesAsync();
         }
 
@@ -58,21 +75,8 @@ namespace DataAccess.Repositories
 
         public async Task<IEnumerable<Order>> GetOrdersByDateRange(DateTime startDate, DateTime endDate)
         {
-            var orders = await _context.Orders
-                .Include(o => o.OrderDetails)
-                .Where(o => o.OrderDate >= startDate && o.OrderDate <= endDate)
-                .ToListAsync();
-
-           
-            return orders.OrderByDescending(o => o.OrderDetails.Sum(od => od.Quantity * od.UnitPrice));
-        }
-        
-        public async Task<IEnumerable<Order>> GetOrdersByMemberId(int memberId)
-        {
             return await _context.Orders
-                .Include(o => o.OrderDetails)
-                .ThenInclude(od => od.Product)
-                .Where(o => o.MemberId == memberId)
+                .Where(o => o.OrderDate >= startDate && o.OrderDate <= endDate)
                 .ToListAsync();
         }
     }

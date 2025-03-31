@@ -1,7 +1,9 @@
 @page "/orders/edit/{id:int}"
 @using BusinessObject.Models
 @inject Services.InterfaceService.IOrderService OrderService
+@inject Services.InterfaceService.IOrderDetailService OrderDetailService
 @inject Services.InterfaceService.IMemberService MemberService
+@inject Services.InterfaceService.IProductService ProductService 
 @inject NavigationManager Navigation
 @rendermode InteractiveServer
 
@@ -94,7 +96,63 @@
                         </div>
                     </div>
                 </div>
-                <div class="d-flex gap-2">
+
+                <!-- Phần hiển thị và chỉnh sửa OrderDetail -->
+                <h4 class="mt-4">Order Details</h4>
+                @if (order.OrderDetails != null && order.OrderDetails.Any())
+                {
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Product ID</th>
+                                <th>Unit Price</th>
+                                <th>Quantity</th>
+                                <th>Discount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var detail in order.OrderDetails)
+                            {
+                                <tr>
+                                    <td><InputNumber class="form-control" @bind-Value="detail.ProductId" readonly /></td>
+                                    <td><InputNumber class="form-control" @bind-Value="detail.UnitPrice" /></td>
+                                    <td><InputNumber class="form-control" @bind-Value="detail.Quantity" /></td>
+                                    <td><InputNumber class="form-control" @bind-Value="detail.Discount" /></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+                else
+                {
+                    <p>No order details available. Add a new one below:</p>
+                    <div class="row">
+                        <div class="col-md-3">
+                            <label class="form-label">Product</label>
+                            <InputSelect class="form-control" @bind-Value="newOrderDetail.ProductId">
+                                <option value="0" disabled>Select a product</option>
+                                @foreach (var product in products)
+                                {
+                                    <option value="@product.ProductId">@product.ProductName</option>
+                                }
+                            </InputSelect>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Unit Price</label>
+                            <InputNumber class="form-control" @bind-Value="newOrderDetail.UnitPrice" />
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Quantity</label>
+                            <InputNumber class="form-control" @bind-Value="newOrderDetail.Quantity" />
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Discount</label>
+                            <InputNumber class="form-control" @bind-Value="newOrderDetail.Discount" />
+                        </div>
+                    </div>
+                }
+
+                <div class="d-flex gap-2 mt-3">
                     <button type="submit" class="btn btn-primary" disabled="@isLoading">
                         <i class="bi bi-save me-2"></i>Update Order
                     </button>
@@ -113,6 +171,8 @@
 
     private Order order;
     private List<Member> members = new();
+    private List<Product> products = new(); // Danh sách sản phẩm
+    private OrderDetail newOrderDetail = new OrderDetail(); // Đối tượng để thêm OrderDetail mới
     private string errorMessage;
     private string successMessage;
     private bool isLoading = true;
@@ -121,7 +181,7 @@
     {
         try
         {
-            // Fetch the order
+            // Fetch the order with OrderDetails
             order = await OrderService.GetOrderById(Id);
             if (order == null)
             {
@@ -129,11 +189,25 @@
                 return;
             }
 
+            // Fetch OrderDetails if not already included
+            if (order.OrderDetails == null || !order.OrderDetails.Any())
+            {
+                order.OrderDetails = (await OrderDetailService.GetOrderDetails(Id)).ToList();
+            }
+
             // Fetch the members
             members = (await MemberService.GetAllMembersAsync()).ToList();
             if (!members.Any())
             {
                 errorMessage = "No members available. Please add a member first.";
+                return;
+            }
+
+            // Fetch the products
+            products = (await ProductService.GetAllProducts()).ToList();
+            if (!products.Any())
+            {
+                errorMessage = "No products available. Please add a product first.";
             }
         }
         catch (Exception ex)
@@ -164,8 +238,27 @@
         try
         {
             isLoading = true;
+
+            // Update Order
             await OrderService.UpdateOrder(order);
-            successMessage = "Order updated successfully!";
+
+            // Update existing OrderDetails
+            if (order.OrderDetails != null && order.OrderDetails.Any())
+            {
+                foreach (var detail in order.OrderDetails)
+                {
+                    await OrderDetailService.UpdateOrderDetail(detail);
+                }
+            }
+
+            // Add new OrderDetail if provided
+            if (newOrderDetail.ProductId > 0 && newOrderDetail.Quantity > 0)
+            {
+                newOrderDetail.OrderId = order.OrderId;
+                await OrderDetailService.CreateOrderDetail(newOrderDetail);
+            }
+
+            successMessage = "Order and details updated successfully!";
             Navigation.NavigateTo("/orders");
         }
         catch (Exception ex)
