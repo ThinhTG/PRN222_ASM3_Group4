@@ -1,124 +1,136 @@
 ﻿@page "/categories/edit/{id:int}"
 @using BusinessObject.Models
+@using Microsoft.AspNetCore.Components.Authorization
 @inject Services.InterfaceService.ICategoryService CategoryService
 @inject NavigationManager Navigation
 @rendermode InteractiveServer
+<CascadingAuthenticationState>
+	<h3>Categories</h3>
 
-<div class="container mt-4">
-    <h3 class="mb-4 text-primary">Edit Category</h3>
+	<AuthorizeView Roles="Admin">
+		<Authorized Context="authContext">
+			<div class="container mt-4">
+				<h3 class="mb-4 text-primary">Edit Category</h3>
 
-    @if (!string.IsNullOrEmpty(errorMessage))
-    {
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            @errorMessage
-            <button type="button" class="btn-close" @onclick="() => errorMessage = null"></button>
-        </div>
-    }
+				@if (!string.IsNullOrEmpty(errorMessage))
+				{
+					<div class="alert alert-danger alert-dismissible fade show" role="alert">
+						@errorMessage
+						<button type="button" class="btn-close" @onclick="() => errorMessage = null"></button>
+					</div>
+				}
 
-    @if (!string.IsNullOrEmpty(successMessage))
-    {
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            @successMessage
-            <button type="button" class="btn-close" @onclick="() => successMessage = null"></button>
-        </div>
-    }
+				@if (!string.IsNullOrEmpty(successMessage))
+				{
+					<div class="alert alert-success alert-dismissible fade show" role="alert">
+						@successMessage
+						<button type="button" class="btn-close" @onclick="() => successMessage = null"></button>
+					</div>
+				}
 
-    @if (isLoading)
-    {
-        <div class="text-center my-3">
-            <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">Loading...</span>
-            </div>
-        </div>
-    }
-    else if (category == null)
-    {
-        <div class="alert alert-warning">Category not found.</div>
-    }
-    else
-    {
-        <div class="card shadow-sm p-4">
-            <EditForm Model="category" OnValidSubmit="UpdateCategory">
-                <DataAnnotationsValidator />
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            <label class="form-label"><i class="bi bi-hash me-2"></i>Category ID</label>
-                            <InputNumber class="form-control" @bind-Value="category.CategoryId" readonly />
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            <label class="form-label"><i class="bi bi-tag me-2"></i>Category Name</label>
-                            <InputText class="form-control" @bind-Value="category.CategoryName" />
-                            <ValidationMessage For="@(() => category.CategoryName)" class="text-danger" />
-                        </div>
-                    </div>
-                    <div class="col-12">
-                        <div class="mb-3">
-                            <label class="form-label"><i class="bi bi-text-paragraph me-2"></i>Description</label>
-                            <InputText class="form-control" @bind-Value="category.Description" />
-                            <ValidationMessage For="@(() => category.Description)" class="text-danger" />
-                        </div>
-                    </div>
-                </div>
-                <div class="d-flex gap-2">
-                    <button type="submit" class="btn btn-primary" disabled="@isLoading">
-                        <i class="bi bi-save me-2"></i>Update Category
-                    </button>
-                    <NavLink class="btn btn-outline-secondary" href="/categories">
-                        <i class="bi bi-x-circle me-2"></i>Cancel
-                    </NavLink>
-                </div>
-            </EditForm>
-        </div>
-    }
-</div>
+				@if (isLoading)
+				{
+					<div class="text-center my-3">
+						<div class="spinner-border text-primary" role="status">
+							<span class="visually-hidden">Loading...</span>
+						</div>
+					</div>
+				}
+				else if (category == null)
+				{
+					<div class="alert alert-warning">Category not found.</div>
+				}
+				else
+				{
+					<div class="card shadow-sm p-4">
+						<EditForm Model="category" OnValidSubmit="UpdateCategory">
+							<DataAnnotationsValidator />
+							<div class="row">
+								<div class="col-md-6">
+									<div class="mb-3">
+										<label class="form-label"><i class="bi bi-hash me-2"></i>Category ID</label>
+										<InputNumber class="form-control" @bind-Value="category.CategoryId" readonly />
+									</div>
+								</div>
+								<div class="col-md-6">
+									<div class="mb-3">
+										<label class="form-label"><i class="bi bi-tag me-2"></i>Category Name</label>
+										<InputText class="form-control" @bind-Value="category.CategoryName" />
+										<ValidationMessage For="@(() => category.CategoryName)" class="text-danger" />
+									</div>
+								</div>
+								<div class="col-12">
+									<div class="mb-3">
+										<label class="form-label"><i class="bi bi-text-paragraph me-2"></i>Description</label>
+										<InputText class="form-control" @bind-Value="category.Description" />
+										<ValidationMessage For="@(() => category.Description)" class="text-danger" />
+									</div>
+								</div>
+							</div>
+							<div class="d-flex gap-2">
+								<button type="submit" class="btn btn-primary" disabled="@isLoading">
+									<i class="bi bi-save me-2"></i>Update Category
+								</button>
+								<NavLink class="btn btn-outline-secondary" href="/categories">
+									<i class="bi bi-x-circle me-2"></i>Cancel
+								</NavLink>
+							</div>
+						</EditForm>
+					</div>
+				}
+			</div>
+		</Authorized>
+		<NotAuthorized>
+			<p class="text-danger">Bạn không có quyền truy cập.</p>
+		</NotAuthorized>
+	</AuthorizeView>
 
+
+</CascadingAuthenticationState>
 @code {
-    [Parameter]
-    public int Id { get; set; }
+	[Parameter]
+	public int Id { get; set; }
 
-    private Category category;
-    private string errorMessage;
-    private string successMessage;
-    private bool isLoading = true;
+	private Category category;
+	private string errorMessage;
+	private string successMessage;
+	private bool isLoading = true;
 
-    protected override async Task OnInitializedAsync()
-    {
-        try
-        {
-            category = CategoryService.GetById(Id);
-            if (category == null)
-            {
-                errorMessage = "Category not found.";
-            }
-        }
-        catch (Exception ex)
-        {
-            errorMessage = $"Error loading category: {ex.Message}";
-        }
-        finally
-        {
-            isLoading = false;
-        }
-    }
+	protected override async Task OnInitializedAsync()
+	{
+		try
+		{
+			category = CategoryService.GetById(Id);
+			if (category == null)
+			{
+				errorMessage = "Category not found.";
+			}
+		}
+		catch (Exception ex)
+		{
+			errorMessage = $"Error loading category: {ex.Message}";
+		}
+		finally
+		{
+			isLoading = false;
+		}
+	}
 
-    private async Task UpdateCategory()
-    {
-        try
-        {
-            isLoading = true;
-            CategoryService.Update(category);
-            Navigation.NavigateTo("/categories");
-        }
-        catch (Exception ex)
-        {
-            errorMessage = $"Error updating category: {ex.Message}";
-        }
-        finally
-        {
-            isLoading = false;
-        }
-    }
+	private async Task UpdateCategory()
+	{
+		try
+		{
+			isLoading = true;
+			CategoryService.Update(category);
+			Navigation.NavigateTo("/categories");
+		}
+		catch (Exception ex)
+		{
+			errorMessage = $"Error updating category: {ex.Message}";
+		}
+		finally
+		{
+			isLoading = false;
+		}
+	}
 }

@@ -1,9 +1,14 @@
 ﻿@page "/products/delete/{Id:int}"
 @using BusinessObject.Models
+@using Microsoft.AspNetCore.Components.Authorization
 @inject Services.InterfaceService.IProductService ProductService
 @inject NavigationManager Navigation
 @rendermode InteractiveServer
+<CascadingAuthenticationState>
+	<h3>Products</h3>
 
+	<AuthorizeView>
+		<Authorized Context="authContext">
 <div class="container mt-5">
     <h3 class="mb-4 text-danger fw-bold">Confirm Delete</h3>
 
@@ -92,7 +97,12 @@
         </div>
     }
 </div>
-
+        </Authorized>
+        <NotAuthorized>
+            <p class="text-danger">Bạn không có quyền truy cập.</p>
+        </NotAuthorized>
+    </AuthorizeView>
+</CascadingAuthenticationState>
 <style>
     .card {
         background-color: #fff;
