@@ -1,6 +1,9 @@
 ﻿using eStore.Components;
 using eStore.DI;
+using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.Components.Server;
 using Microsoft.EntityFrameworkCore;
+using Services.Service;
 
 namespace eStore
 {
@@ -12,8 +15,11 @@ namespace eStore
 
             builder.Services.AddRazorComponents()
                 .AddInteractiveServerComponents();
-
+            builder.Services.AddScoped<AuthenticationStateProvider, CustomAuthStateProvider>();
+            builder.Services.AddScoped<CustomAuthStateProvider>();
+            builder.Services.AddAuthorizationCore();
             builder.Services.InstallerServicesInAssembly(builder.Configuration);
+            builder.Services.Configure<CircuitOptions>(options => options.DetailedErrors = true);
 
             builder.Services.AddScoped(sp => new HttpClient
             {

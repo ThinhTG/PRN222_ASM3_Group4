@@ -13,14 +13,29 @@ namespace Services.Service
             _memberRepository = memberRepository;
         }
 
-        public IEnumerable<Member> GetAllMembers() => _memberRepository.GetMembers();
+         public async Task<IEnumerable<Member>> GetAllMembersAsync()
+        {
+            return await _memberRepository.GetMembersAsync();
+        }
 
-        public Member GetMemberById(int id) => _memberRepository.GetMemberById(id);
+        public async Task<Member> GetMemberByIdAsync(int id)
+        {
+            return await _memberRepository.GetMemberByIdAsync(id);
+        }
 
-        public void AddMember(Member member) => _memberRepository.AddMember(member);
+        public async Task AddMemberAsync(Member member)
+        {
+            await _memberRepository.AddMemberAsync(member);
+        }
 
-        public void UpdateMember(Member member) => _memberRepository.UpdateMember(member);
+        public async Task UpdateMemberAsync(Member member)
+        {
+            await _memberRepository.UpdateMemberAsync(member);
+        }
 
-        public void DeleteMember(int id) => _memberRepository.DeleteMember(id);
+        public async Task DeleteMemberAsync(int id)
+        {
+            await _memberRepository.DeleteMemberAsync(id);
+        }
     }
 }

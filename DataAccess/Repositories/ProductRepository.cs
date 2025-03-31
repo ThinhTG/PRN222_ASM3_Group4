@@ -1,6 +1,7 @@
 ﻿using BusinessObject.Models;
 using DataAccess.DBContext;
 using DataAccess.InterfaceRepo;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 
 namespace DataAccess.Repositories;

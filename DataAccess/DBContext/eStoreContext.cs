@@ -13,7 +13,7 @@ namespace DataAccess.DBContext
 
         public eStoreContext(DbContextOptions<eStoreContext> options) : base(options)
         {
-            this.Database.EnsureCreated();
+            this.Database.EnsureCreated(); 
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

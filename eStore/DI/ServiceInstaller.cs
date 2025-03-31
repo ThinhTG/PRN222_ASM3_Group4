@@ -1,6 +1,8 @@
 ﻿
 using DataAccess.InterfaceRepo;
 using DataAccess.Repositories;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Components.Authorization;
 using Services.InterfaceService;
 using Services.Service;
 
@@ -25,6 +27,7 @@ namespace eStore.DI
             services.AddScoped<ICategoryService, CategoryService>();
             services.AddScoped<IOrderService, OrderService>();
             services.AddScoped<IOrderDetailService, OrderDetailService>();
+            services.AddScoped<AuthService>();
         }
     }
 }
