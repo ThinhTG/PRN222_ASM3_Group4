@@ -244,129 +244,134 @@
 
 </style>
 @code {
-	private Product newProduct = new() { ImageUrl = "", CategoryId = 0 };
-	private IEnumerable<Category> categories = Enumerable.Empty<Category>();
-	private string? errorMessage, successMessage;
-	private bool isUploading;
-	private bool isLoading = true;
-	private string? userRole;
-	private bool IsAdmin => userRole == "Admin";
-	private HubConnection? hubConnection;
+    private Product newProduct = new() { ImageUrl = "", CategoryId = 0 };
+    private IEnumerable<Category> categories = Enumerable.Empty<Category>();
+    private string? errorMessage, successMessage;
+    private bool isUploading;
+    private bool isLoading = true;
+    private string? userRole;
+    private bool IsAdmin =false;
+    private HubConnection? hubConnection;
 
 
 
-	protected override async Task OnInitializedAsync()
-	{
-		try
-		{
-			hubConnection = new HubConnectionBuilder()
-				.WithUrl(Navigation.BaseUri + "hub")
-				.WithAutomaticReconnect()
-				.Build();
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+            IsAdmin = user.IsInRole("Admin");
+            categories = await CategoryService.GetAll();
+            if (!categories.Any())
+            hubConnection = new HubConnectionBuilder()
+                .WithUrl(Navigation.BaseUri + "hub")
+                .WithAutomaticReconnect()
+                .Build();
+            hubConnection.On<string>("Created", (productName) =>
 
-			hubConnection.On<string>("Created", (productName) =>
-			{
-				successMessage = $"New product added: {productName}";
-				StateHasChanged();
-			});
+            {
+                successMessage = $"New product added: {productName}";
+                StateHasChanged();
+            });
 
-			await hubConnection.StartAsync();
-			categories = await CategoryService.GetAll();
-		}
-		catch (Exception ex)
-		{
-			errorMessage = $"Error loading data: {ex.Message}";
-		}
-		finally
-		{
-			isLoading = false;
-			StateHasChanged();
-		}
-	}
-	protected override async Task OnAfterRenderAsync(bool firstRender)
-	{
-		if (firstRender)
-		{
-			userRole = await Auth.GetUserRoleAsync();
-			StateHasChanged(); // Trigger re-rendering after retrieving the role
-		}
-	}
+            await hubConnection.StartAsync();
+            categories = await CategoryService.GetAll();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error loading data: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            userRole = await Auth.GetUserRoleAsync();
+            StateHasChanged(); // Trigger re-rendering after retrieving the role
+        }
+    }
 
 
-	private async Task HandleFileSelected(InputFileChangeEventArgs e)
-	{
-		try
-		{
-			if (e.File == null)
-			{
-				errorMessage = "Please select a file.";
-				return;
-			}
+    private async Task HandleFileSelected(InputFileChangeEventArgs e)
+    {
+        try
+        {
+            if (e.File == null)
+            {
+                errorMessage = "Please select a file.";
+                return;
+            }
 
-			if (!new[] { ".jpg", ".jpeg", ".png", ".gif" }.Contains(Path.GetExtension(e.File.Name).ToLower()))
-			{
-				errorMessage = "Please select an image file (.jpg, .jpeg, .png, .gif).";
-				return;
-			}
+            if (!new[] { ".jpg", ".jpeg", ".png", ".gif" }.Contains(Path.GetExtension(e.File.Name).ToLower()))
+            {
+                errorMessage = "Please select an image file (.jpg, .jpeg, .png, .gif).";
+                return;
+            }
 
-			isUploading = true;
-			errorMessage = successMessage = null;
-			StateHasChanged();
+            isUploading = true;
+            errorMessage = successMessage = null;
+            StateHasChanged();
 
-			using var memoryStream = new MemoryStream();
-			await e.File.OpenReadStream(maxAllowedSize: 1024 * 1024 * 10).CopyToAsync(memoryStream);
-			memoryStream.Position = 0;
+            using var memoryStream = new MemoryStream();
+            await e.File.OpenReadStream(maxAllowedSize: 1024 * 1024 * 10).CopyToAsync(memoryStream);
+            memoryStream.Position = 0;
 
-			var uploadResult = await Cloudinary.UploadAsync(new ImageUploadParams
-				{
-					File = new FileDescription(e.File.Name, memoryStream),
-					Folder = "asset",
-					Timestamp = DateTime.UtcNow
-				});
+            var uploadResult = await Cloudinary.UploadAsync(new ImageUploadParams
+                {
+                    File = new FileDescription(e.File.Name, memoryStream),
+                    Folder = "asset",
+                    Timestamp = DateTime.UtcNow
+                });
 
-			if (uploadResult.Error != null)
-			{
-				errorMessage = $"Error uploading image: {uploadResult.Error.Message}";
-				return;
-			}
+            if (uploadResult.Error != null)
+            {
+                errorMessage = $"Error uploading image: {uploadResult.Error.Message}";
+                return;
+            }
 
-			newProduct.ImageUrl = uploadResult.SecureUrl.ToString();
-			successMessage = "Image uploaded successfully!";
-		}
-		catch (Exception ex)
-		{
-			errorMessage = $"Error uploading image: {ex.Message}";
-		}
-		finally
-		{
-			isUploading = false;
-			StateHasChanged();
-		}
-	}
+            newProduct.ImageUrl = uploadResult.SecureUrl.ToString();
+            successMessage = "Image uploaded successfully!";
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error uploading image: {ex.Message}";
+        }
+        finally
+        {
+            isUploading = false;
+            StateHasChanged();
+        }
+    }
 
-	private async Task AddProduct()
-	{
-		if (string.IsNullOrEmpty(newProduct.ProductName) || string.IsNullOrEmpty(newProduct.Weight))
-		{
-			errorMessage = "Product Name and Weight are required.";
-			return;
-		}
+    private async Task AddProduct()
+    {
+        if (string.IsNullOrEmpty(newProduct.ProductName) || string.IsNullOrEmpty(newProduct.Weight))
+        {
+            errorMessage = "Product Name and Weight are required.";
+            return;
+        }
 
-		if (newProduct.CategoryId == 0)
-		{
-			errorMessage = "Please select a category.";
-			return;
-		}
+        if (newProduct.CategoryId == 0)
+        {
+            errorMessage = "Please select a category.";
+            return;
+        }
 
-		try
-		{
-			await ProductService.Add(newProduct);
-			await hubConnection.SendAsync("SendMessage");
-			Navigation.NavigateTo("/products");
-		}
-		catch (Exception ex)
-		{
-			errorMessage = $"Error adding product: {ex.Message}";
-		}
-	}
+        try
+        {
+            await ProductService.Add(newProduct);
+            await hubConnection.SendAsync("SendMessage");
+            Navigation.NavigateTo("/products");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error adding product: {ex.Message}";
+        }
+    }
 }

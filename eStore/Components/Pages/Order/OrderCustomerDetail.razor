@@ -1,0 +1,402 @@
+﻿@page "/ordersHistory/details/{OrderId:int}"
+@using BusinessObject.Models
+@using Microsoft.AspNetCore.Components.Authorization
+@using Services.InterfaceService
+@using System.Linq
+@inject IOrderService OrderService
+@inject IProductService ProductService
+@inject NavigationManager NavigationManager
+<CascadingAuthenticationState>
+	<h3>Products</h3>
+
+	<AuthorizeView>
+		<Authorized Context="authContext">
+<div class="order-details-container">
+    <h3 class="page-title">Order Details</h3>
+
+    @if (loading)
+    {
+        <div class="loading-container">
+            <p><em>Loading order details...</em></p>
+            <div class="spinner-border loading-spinner" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    }
+    else if (order == null)
+    {
+        <div class="error-message" role="alert">
+            @errorMessage
+        </div>
+    }
+    else
+    {
+        <div class="order-card">
+            <div class="order-card-header text-white">
+                <h4>Order #@order.OrderId</h4>
+                <span>@order.OrderDate.ToString("dd MMMM yyyy")</span>
+            </div>
+            <div class="order-card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <dl class="row info-list">
+                            <dt class="col-sm-4">Member:</dt>
+                            <dd class="col-sm-8">@(order.Member?.Email ?? "Unknown")</dd>
+                            <dt class="col-sm-4">Order Date:</dt>
+                            <dd class="col-sm-8">@order.OrderDate.ToString("dd/MM/yyyy")</dd>
+                            <dt class="col-sm-4">Required Date:</dt>
+                            <dd class="col-sm-8">@(order.RequiredDate?.ToString("dd/MM/yyyy") ?? "N/A")</dd>
+                        </dl>
+                    </div>
+                    <div class="col-md-6">
+                        <dl class="row info-list">
+                            <dt class="col-sm-4">Shipped Date:</dt>
+                            <dd class="col-sm-8">@(order.ShippedDate?.ToString("dd/MM/yyyy") ?? "Not shipped yet")</dd>
+                            <dt class="col-sm-4">Freight:</dt>
+                            <dd class="col-sm-8">@(order.Freight?.ToString("C") ?? "N/A")</dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <h4 class="section-title">Order Items</h4>
+
+        @if (!orderDetails.Any())
+        {
+            <p class="no-items-message">No items found for this order.</p>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <!-- Order Summary Card (Now at the top) -->
+                <div class="order-summary-card">
+                    <div class="summary-item">
+                        <span class="summary-label">Subtotal:</span>
+                        <span class="summary-value">@orderSubtotal.ToString("C")</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Freight:</span>
+                        <span class="summary-value">@(order.Freight?.ToString("C") ?? "N/A")</span>
+                    </div>
+                    <div class="summary-item total">
+                        <span class="summary-label">Total:</span>
+                        <span class="summary-value">@(order.Freight.HasValue ? (orderSubtotal + order.Freight.Value).ToString("C") : orderSubtotal.ToString("C"))</span>
+                    </div>
+                </div>
+
+                <table class="table table-striped items-table">
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th>Unit Price</th>
+                            <th>Quantity</th>
+                            <th>Discount</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var detail in orderDetails)
+                        {
+                            var productName = productNames.GetValueOrDefault(detail.ProductId, "Unknown Product");
+                            var totalPrice = detail.UnitPrice * detail.Quantity * (1 - (decimal)detail.Discount);
+
+                            <tr>
+                                <td>@productName</td>
+                                <td>@detail.UnitPrice.ToString("C")</td>
+                                <td>@detail.Quantity</td>
+                                <td>@(((decimal)detail.Discount * 100).ToString("F0"))%</td>
+                                <td class="total-cell">@totalPrice.ToString("C")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+
+        <div class="action-buttons">
+            <a href="/ordersHistory" class="btn back-button">
+                <i class="fas fa-arrow-left mr-2"></i> Back to Orders
+            </a>
+        </div>
+    }
+</div>
+		</Authorized>
+		<NotAuthorized>
+			<p class="text-danger">Bạn không có quyền truy cập.</p>
+		</NotAuthorized>
+	</AuthorizeView>
+</CascadingAuthenticationState>
+<style>
+    /* Main container styling */
+    .order-details-container {
+        padding: 20px;
+        max-width: 1200px;
+        margin: 0 auto;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    /* Page title styling */
+    .page-title {
+        color: #2c3e50;
+        margin-bottom: 25px;
+        font-weight: 600;
+        border-bottom: 2px solid #3498db;
+        padding-bottom: 10px;
+    }
+
+    /* Loading spinner container */
+    .loading-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 50px 0;
+    }
+
+    .loading-spinner {
+        width: 3rem;
+        height: 3rem;
+        margin: 15px 0;
+        color: #3498db;
+    }
+
+    /* Error message styling */
+    .error-message {
+        background-color: #fee;
+        border-left: 4px solid #e74c3c;
+        padding: 15px;
+        border-radius: 4px;
+        font-weight: 500;
+        margin-bottom: 20px;
+    }
+
+    /* Order info card styling */
+    .order-card {
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        margin-bottom: 30px;
+        border: none;
+    }
+
+    .order-card-header {
+        background: linear-gradient(135deg, #3498db, #2980b9);
+        padding: 15px 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+        .order-card-header h4 {
+            margin: 0;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+    .order-card-body {
+        padding: 20px;
+        background-color: #fff;
+    }
+
+    /* Definition list styling */
+    .info-list {
+        margin-bottom: 0;
+    }
+
+        .info-list dt {
+            font-weight: 600;
+            color: #7f8c8d;
+        }
+
+        .info-list dd {
+            margin-bottom: 12px;
+            color: #2c3e50;
+        }
+
+    /* Order items section */
+    .section-title {
+        color: #2c3e50;
+        font-size: 1.4rem;
+        margin: 25px 0 15px;
+        font-weight: 600;
+    }
+
+    /* No items message */
+    .no-items-message {
+        font-style: italic;
+        color: #95a5a6;
+        padding: 10px 0;
+    }
+
+    /* Order Summary Card (NEW) */
+    .order-summary-card {
+        background: #f8fafc;
+        border-radius: 8px 8px 0 0;
+        padding: 15px 20px;
+        display: flex;
+        justify-content: flex-end;
+        box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
+        border-bottom: 2px solid #ecf0f1;
+        margin-bottom: 0;
+    }
+
+    .summary-item {
+        margin-left: 30px;
+        display: flex;
+        align-items: center;
+    }
+
+    .summary-label {
+        font-weight: 600;
+        color: #7f8c8d;
+        margin-right: 10px;
+    }
+
+    .summary-value {
+        color: #2c3e50;
+    }
+
+    .summary-item.total {
+        font-size: 1.2em;
+    }
+
+        .summary-item.total .summary-label,
+        .summary-item.total .summary-value {
+            color: #2980b9;
+            font-weight: 700;
+        }
+
+    /* Table styling */
+    .items-table {
+        border-radius: 0 0 8px 8px;
+        overflow: hidden;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        margin-top: 0;
+    }
+
+        .items-table thead {
+            background: linear-gradient(135deg, #34495e, #2c3e50);
+            color: white;
+        }
+
+        .items-table th {
+            font-weight: 600;
+            padding: 12px 15px;
+            border: none;
+        }
+
+        .items-table tbody tr:hover {
+            background-color: #f5f9fd;
+        }
+
+        .items-table tbody td {
+            padding: 12px 15px;
+            vertical-align: middle;
+            border-color: #ecf0f1;
+        }
+
+    .total-cell {
+        color: #2980b9;
+        font-weight: 700;
+    }
+
+    .text-right {
+        text-align: right !important;
+    }
+
+    /* Action buttons */
+    .action-buttons {
+        margin-top: 25px;
+    }
+
+    .back-button {
+        background-color: #7f8c8d;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 5px;
+        font-weight: 500;
+        transition: background-color 0.2s;
+    }
+
+        .back-button:hover {
+            background-color: #6c7a7d;
+            text-decoration: none;
+            color: white;
+        }
+</style>
+
+@code {
+    // Your existing C# code remains unchanged
+    [Parameter]
+    public int OrderId { get; set; }
+
+    private Order order;
+    private IEnumerable<OrderDetail> orderDetails = Enumerable.Empty<OrderDetail>();
+    private Dictionary<int, string> productNames = new();
+    private decimal orderSubtotal;
+    private bool loading = true;
+    private string errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadOrderDetails();
+    }
+
+    private async Task LoadOrderDetails()
+    {
+        try
+        {
+            loading = true;
+            Console.WriteLine($"Starting to load Order ID {OrderId}");
+
+            order = await OrderService.GetOrderById(OrderId);
+            if (order == null)
+            {
+                errorMessage = $"Order with ID {OrderId} not found.";
+                Console.WriteLine(errorMessage);
+                return;
+            }
+            Console.WriteLine($"Order {OrderId} loaded. Member: {order.Member?.Email}");
+
+            orderDetails = order.OrderDetails?.AsEnumerable() ?? Enumerable.Empty<OrderDetail>();
+            Console.WriteLine($"Found {orderDetails.Count()} OrderDetails");
+
+            if (orderDetails.Any())
+            {
+                var productIds = orderDetails.Select(d => d.ProductId).Distinct().ToArray();
+                Console.WriteLine($"Loading products for ProductIds: {string.Join(", ", productIds)}");
+                productNames = await ProductService.GetProductsByIds(productIds);
+                Console.WriteLine($"Loaded {productNames.Count} products: {string.Join(", ", productNames.Select(kv => $"{kv.Key}: {kv.Value}"))}");
+
+                // Kiểm tra chi tiết từng OrderDetail
+                foreach (var detail in orderDetails)
+                {
+                    Console.WriteLine($"OrderDetail: ProductId={detail.ProductId}, UnitPrice={detail.UnitPrice}, Quantity={detail.Quantity}, Discount={detail.Discount}");
+                }
+                orderSubtotal = orderDetails.Sum(d => d.UnitPrice * d.Quantity * (1 - (decimal)d.Discount));
+                Console.WriteLine($"Calculated subtotal: {orderSubtotal}");
+            }
+            else
+            {
+                orderSubtotal = 0;
+                productNames.Clear();
+                Console.WriteLine($"No OrderDetails available for Order ID {OrderId}");
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Failed to load order details: {ex.Message}";
+            Console.WriteLine($"LoadOrderDetails Exception: {ex}");
+        }
+        finally
+        {
+            loading = false;
+            Console.WriteLine("Finished loading, updating UI...");
+            StateHasChanged();
+        }
+    }
+
+    protected override bool ShouldRender() => true;
+}

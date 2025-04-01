@@ -51,6 +51,14 @@ namespace DataAccess.Repositories
             return await _context.Orders.Include(o => o.Member).ToListAsync();
         }
 
+        public async Task<IEnumerable<Order>> GetAllOrdersByMemberId(int memberId)
+        {
+            return await _context
+                .Orders.Include(o => o.Member)
+                .Where(o => o.MemberId == memberId)
+                .ToListAsync();
+        }
+
         public async Task AddOrder(Order order)
         {
             _context.Orders.Add(order);
