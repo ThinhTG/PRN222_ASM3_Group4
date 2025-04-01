@@ -5,11 +5,11 @@
 @rendermode InteractiveServer
 
 <CascadingAuthenticationState>
-    <h3>List Member</h3>
+    <h3 class="mb-4 text-primary">List Member</h3>
 
     <AuthorizeView Roles="Admin">
         <Authorized Context="authContext">
-            <h3>Chào mừng Admin!</h3>
+            <h4>Welcome back, Admin!</h4>
             @if (members == null)
             {
                 <p>Loading...</p>
@@ -116,3 +116,104 @@
         showConfirmDelete = false;
     }
 }
+<style>
+
+    /* Tiêu đề trang */
+    h3.text-primary {
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        color: #007bff;
+        text-align: center;
+        background: linear-gradient(90deg, #007bff, #00c6ff);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-size: 2rem;
+        padding-bottom: 10px;
+        border-bottom: 3px solid #007bff;
+        display: inline-block;
+        box-shadow: 0px 2px 5px rgba(0, 123, 255, 0.2);
+    }
+
+    h4 {
+        color: #28a745;
+        text-align: center;
+        font-size: 22px;
+        font-weight: bold;
+        margin-top: 10px;
+        margin-bottom: 20px;
+        padding: 10px;
+        background-color: #e9f7ef;
+        border-radius: 8px;
+        display: block;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+    /* Bảng danh sách thành viên */
+    .table {
+        width: 100%;
+        background-color: #ffffff;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+        .table th {
+            background-color: #007bff;
+            color: white;
+            text-align: center;
+            padding: 12px;
+        }
+
+        .table td {
+            text-align: center;
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+
+    /* Nút Delete */
+    .btn-danger {
+        background-color: #dc3545;
+        border: none;
+        padding: 8px 12px;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: 0.3s;
+    }
+
+        .btn-danger:hover {
+            background-color: #c82333;
+        }
+
+    /* Modal xác nhận xóa */
+    .modal-content {
+        border-radius: 10px;
+    }
+
+    .modal-header {
+        background-color: #dc3545;
+        color: white;
+        border-top-left-radius: 10px;
+        border-top-right-radius: 10px;
+    }
+
+    .modal-footer .btn {
+        padding: 8px 12px;
+        border-radius: 5px;
+    }
+
+    .btn-secondary {
+        background-color: #6c757d;
+        border: none;
+    }
+
+        .btn-secondary:hover {
+            background-color: #5a6268;
+        }
+
+    /* Thông báo không có quyền truy cập */
+    .text-danger {
+        text-align: center;
+        font-size: 18px;
+        font-weight: bold;
+    }
+</style>

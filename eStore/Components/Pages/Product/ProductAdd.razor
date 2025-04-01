@@ -3,367 +3,370 @@
 @using CloudinaryDotNet
 @using CloudinaryDotNet.Actions
 @using Microsoft.AspNetCore.Components.Authorization
-@using Microsoft.AspNetCore.SignalR.Client
 @inject Services.InterfaceService.IProductService ProductService
 @inject Services.InterfaceService.ICategoryService CategoryService
 @inject NavigationManager Navigation
 @inject Cloudinary Cloudinary
 @rendermode InteractiveServer
 @inject Services.Service.CustomAuthStateProvider Auth
+@inject AuthenticationStateProvider AuthenticationStateProvider
 
 
+<CascadingAuthenticationState>
+	<AuthorizeView Roles="Admin">
+		<Authorized Context="authContext">
+			<div class="container mt-4">
+				<h3 class="mb-4 text-primary">Add New Product</h3>
 
+				@if (!string.IsNullOrEmpty(errorMessage))
+				{
+					<div class="alert alert-danger alert-dismissible fade show" role="alert">
+						@errorMessage
+						<button type="button" class="btn-close" @onclick="() => errorMessage = null"></button>
+					</div>
+				}
 
-@if (!IsAdmin)
-{
-    <h3>you dont have access to do this function</h3>
-}
-<div class="container mt-4">
-    <h3 class="mb-4 text-primary">Add New Product</h3>
+				@if (!string.IsNullOrEmpty(successMessage))
+				{
+					<div class="alert alert-success alert-dismissible fade show" role="alert">
+						@successMessage
+						<button type="button" class="btn-close" @onclick="() => successMessage = null"></button>
+					</div>
+				}
 
-    @if (!string.IsNullOrEmpty(errorMessage))
-    {
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            @errorMessage
-            <button type="button" class="btn-close" @onclick="() => errorMessage = null"></button>
-        </div>
-    }
-
-    @if (!string.IsNullOrEmpty(successMessage))
-    {
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            @successMessage
-            <button type="button" class="btn-close" @onclick="() => successMessage = null"></button>
-        </div>
-    }
-
-    @if (isLoading)
-    {
-        <div class="text-center my-3">
-            <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">Loading...</span>
-            </div>
-        </div>
-    }
-    else if (categories == null || !categories.Any())
-    {
-        <div class="alert alert-warning">No categories available. Please add a category first.</div>
-    }
-    else
-    {
-        <div class="card shadow-sm p-4">
-            <EditForm Model="newProduct" OnValidSubmit="AddProduct">
-                <DataAnnotationsValidator />
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            <label class="form-label"><i class="bi bi-tag me-2"></i>Product Name</label>
-                            <InputText class="form-control" @bind-Value="newProduct.ProductName" />
-                            <ValidationMessage For="@(() => newProduct.ProductName)" class="text-danger" />
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            <label class="form-label"><i class="bi bi-list-ul me-2"></i>Category</label>
-                            <InputSelect class="form-control" @bind-Value="newProduct.CategoryId">
-                                <option value="0" disabled selected>Select a category</option>
-                                @foreach (var category in categories)
-                                {
-                                    <option value="@category.CategoryId">@category.CategoryName</option>
-                                }
-                            </InputSelect>
-                            <ValidationMessage For="@(() => newProduct.CategoryId)" class="text-danger" />
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            <label class="form-label"><i class="bi bi-box me-2"></i>Weight</label>
-                            <InputText class="form-control" @bind-Value="newProduct.Weight" />
-                            <ValidationMessage For="@(() => newProduct.Weight)" class="text-danger" />
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            <label class="form-label"><i class="bi bi-currency-dollar me-2"></i>Unit Price</label>
-                            <InputNumber class="form-control" @bind-Value="newProduct.UnitPrice" />
-                            <ValidationMessage For="@(() => newProduct.UnitPrice)" class="text-danger" />
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            <label class="form-label"><i class="bi bi-boxes me-2"></i>Units In Stock</label>
-                            <InputNumber class="form-control" @bind-Value="newProduct.UnitsInStock" />
-                            <ValidationMessage For="@(() => newProduct.UnitsInStock)" class="text-danger" />
-                        </div>
-                    </div>
-                    <div class="col-12">
-                        <div class="mb-3">
-                            <label class="form-label"><i class="bi bi-image me-2"></i>Image</label>
-                            <InputFile class="form-control" OnChange="HandleFileSelected" />
-                            @if (isUploading)
-                            {
-                                <div class="mt-2 text-muted">
-                                    <div class="spinner-border spinner-border-sm text-primary me-2" role="status">
-                                        <span class="visually-hidden">Uploading...</span>
-                                    </div>
-                                    Uploading...
-                                </div>
-                            }
-                            @if (!string.IsNullOrEmpty(newProduct.ImageUrl))
-                            {
-                                <div class="mt-2">
-                                    <img src="@newProduct.ImageUrl" alt="Preview" class="img-thumbnail" style="width: 100px; height: 100px; object-fit: cover;" />
-                                </div>
-                            }
-                        </div>
-                    </div>
-                </div>
-                <div class="d-flex gap-2">
-                    <button class="btn btn-primary" type="submit" disabled="@(!IsAdmin)">
-                        <i class="bi bi-plus-circle me-2"></i>Add Product
-                    </button>
-                    <NavLink class="btn btn-outline-secondary" href="/products">
-                        <i class="bi bi-x-circle me-2"></i>Cancel
-                    </NavLink>
-                </div>
-            </EditForm>
-        </div>
-    }
-</div>
+				@if (isLoading)
+				{
+					<div class="text-center my-3">
+						<div class="spinner-border text-primary" role="status">
+							<span class="visually-hidden">Loading...</span>
+						</div>
+					</div>
+				}
+				else if (categories == null || !categories.Any())
+				{
+					<div class="alert alert-warning">No categories available. Please add a category first.</div>
+				}
+				else
+				{
+					<div class="card shadow-sm p-4">
+						<EditForm Model="newProduct" OnValidSubmit="AddProduct">
+							<DataAnnotationsValidator />
+							<div class="row">
+								<div class="col-md-6">
+									<div class="mb-3">
+										<label class="form-label"><i class="bi bi-tag me-2"></i>Product Name</label>
+										<InputText class="form-control" @bind-Value="newProduct.ProductName" />
+										<ValidationMessage For="@(() => newProduct.ProductName)" class="text-danger" />
+									</div>
+								</div>
+								<div class="col-md-6">
+									<div class="mb-3">
+										<label class="form-label"><i class="bi bi-list-ul me-2"></i>Category</label>
+										<InputSelect class="form-control" @bind-Value="newProduct.CategoryId">
+											<option value="0" disabled selected>Select a category</option>
+											@foreach (var category in categories)
+											{
+												<option value="@category.CategoryId">@category.CategoryName</option>
+											}
+										</InputSelect>
+										<ValidationMessage For="@(() => newProduct.CategoryId)" class="text-danger" />
+									</div>
+								</div>
+								<div class="col-md-6">
+									<div class="mb-3">
+										<label class="form-label"><i class="bi bi-box me-2"></i>Weight</label>
+										<InputText class="form-control" @bind-Value="newProduct.Weight" />
+										<ValidationMessage For="@(() => newProduct.Weight)" class="text-danger" />
+									</div>
+								</div>
+								<div class="col-md-6">
+									<div class="mb-3">
+										<label class="form-label"><i class="bi bi-currency-dollar me-2"></i>Unit Price</label>
+										<InputNumber class="form-control" @bind-Value="newProduct.UnitPrice" />
+										<ValidationMessage For="@(() => newProduct.UnitPrice)" class="text-danger" />
+									</div>
+								</div>
+								<div class="col-md-6">
+									<div class="mb-3">
+										<label class="form-label"><i class="bi bi-boxes me-2"></i>Units In Stock</label>
+										<InputNumber class="form-control" @bind-Value="newProduct.UnitsInStock" />
+										<ValidationMessage For="@(() => newProduct.UnitsInStock)" class="text-danger" />
+									</div>
+								</div>
+								<div class="col-12">
+									<div class="mb-3">
+										<label class="form-label"><i class="bi bi-image me-2"></i>Image</label>
+										<InputFile class="form-control" OnChange="HandleFileSelected" />
+										@if (isUploading)
+										{
+											<div class="mt-2 text-muted">
+												<div class="spinner-border spinner-border-sm text-primary me-2" role="status">
+													<span class="visually-hidden">Uploading...</span>
+												</div>
+												Uploading...
+											</div>
+										}
+										@if (!string.IsNullOrEmpty(newProduct.ImageUrl))
+										{
+											<div class="mt-2">
+												<img src="@newProduct.ImageUrl" alt="Preview" class="img-thumbnail" style="width: 100px; height: 100px; object-fit: cover;" />
+											</div>
+										}
+									</div>
+								</div>
+							</div>
+							<div class="d-flex gap-2">
+								<button class="btn btn-primary" type="submit">
+									<i class="bi bi-plus-circle me-2"></i>Add Product
+								</button>
+								<NavLink class="btn btn-outline-secondary" href="/products">
+									<i class="bi bi-x-circle me-2"></i>Cancel
+								</NavLink>
+							</div>
+						</EditForm>
+					</div>
+				}
+			</div>
+		</Authorized>
+		<NotAuthorized>
+			<p class="text-danger">Bạn không có quyền truy cập.</p>
+		</NotAuthorized>
+	</AuthorizeView>
+</CascadingAuthenticationState>
 <style>
-    h3.text-primary {
-        font-weight: 800;
-        text-transform: uppercase;
-        letter-spacing: 2px;
-        color: #007bff;
-        text-align: center;
-        background: linear-gradient(90deg, #007bff, #00c6ff);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        font-size: 2rem;
-        padding-bottom: 10px;
-        border-bottom: 3px solid #007bff;
-        display: inline-block;
-        box-shadow: 0px 2px 5px rgba(0, 123, 255, 0.2);
-    }
+	h3.text-primary {
+		font-weight: 800;
+		text-transform: uppercase;
+		letter-spacing: 2px;
+		color: #007bff;
+		text-align: center;
+		background: linear-gradient(90deg, #007bff, #00c6ff);
+		-webkit-background-clip: text;
+		-webkit-text-fill-color: transparent;
+		font-size: 2rem;
+		padding-bottom: 10px;
+		border-bottom: 3px solid #007bff;
+		display: inline-block;
+		box-shadow: 0px 2px 5px rgba(0, 123, 255, 0.2);
+	}
 
-    .card {
-        background: #fff;
-        border-radius: 10px;
-        padding: 20px;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    }
+	.card {
+		background: #fff;
+		border-radius: 10px;
+		padding: 20px;
+		box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+	}
 
-    .form-label {
-        font-weight: 600;
-    }
+	.form-label {
+		font-weight: 600;
+	}
 
-    .card .btn {
-        border-radius: 10px;
-        transition: all 0.3s ease-in-out;
-    }
+	.card .btn {
+		border-radius: 10px;
+		transition: all 0.3s ease-in-out;
+	}
 
-    /* Form Elements */
-    .form-control {
-        border-radius: 10px;
-        transition: 0.3s;
-    }
+	/* Form Elements */
+	.form-control {
+		border-radius: 10px;
+		transition: 0.3s;
+	}
 
-    .btn {
-        padding: 10px 16px;
-        border-radius: 8px;
-        font-weight: 600;
-    }
+	.btn {
+		padding: 10px 16px;
+		border-radius: 8px;
+		font-weight: 600;
+	}
 
-    .form-control:focus {
-        border-color: #007bff;
-        box-shadow: 0 0 8px rgba(0, 123, 255, 0.5);
-    }
+	.form-control:focus {
+		border-color: #007bff;
+		box-shadow: 0 0 8px rgba(0, 123, 255, 0.5);
+	}
 
-    .input-group-text {
-        background-color: #007bff;
-        color: white;
-        border-radius: 10px 0 0 10px;
-    }
+	.input-group-text {
+		background-color: #007bff;
+		color: white;
+		border-radius: 10px 0 0 10px;
+	}
 
-    /* Buttons */
-    .btn {
-        transition: all 0.3s ease-in-out;
-        border-radius: 10px;
-    }
+	/* Buttons */
+	.btn {
+		transition: all 0.3s ease-in-out;
+		border-radius: 10px;
+	}
 
-        .btn:hover {
-            transform: scale(1.05);
-        }
+		.btn:hover {
+			transform: scale(1.05);
+		}
 
-    .btn-primary {
-        background-color: #007bff;
-        border: none;
-    }
+	.btn-primary {
+		background-color: #007bff;
+		border: none;
+	}
 
-        .btn-primary:hover {
-            background-color: #0056b3;
-        }
+		.btn-primary:hover {
+			background-color: #0056b3;
+		}
 
-    .btn-outline-secondary {
-        border-color: #6c757d;
-        color: #6c757d;
-    }
+	.btn-outline-secondary {
+		border-color: #6c757d;
+		color: #6c757d;
+	}
 
-        .btn-outline-secondary:hover {
-            background-color: #6c757d;
-            color: white;
-        }
+		.btn-outline-secondary:hover {
+			background-color: #6c757d;
+			color: white;
+		}
 
-    /* Image Upload */
-    .img-thumbnail {
-        border-radius: 10px;
-        transition: 0.3s;
-        border: 2px solid #007bff;
-    }
+	/* Image Upload */
+	.img-thumbnail {
+		border-radius: 10px;
+		transition: 0.3s;
+		border: 2px solid #007bff;
+	}
 
-        .img-thumbnail:hover {
-            transform: scale(1.1);
-            box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.2);
-        }
+		.img-thumbnail:hover {
+			transform: scale(1.1);
+			box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.2);
+		}
 
-    /* Alerts */
-    .alert {
-        border-radius: 10px;
-    }
+	/* Alerts */
+	.alert {
+		border-radius: 10px;
+	}
 
-    /* Loading Spinner */
-    .spinner-border {
-        width: 3rem;
-        height: 3rem;
-        border-width: 4px;
-    }
+	/* Loading Spinner */
+	.spinner-border {
+		width: 3rem;
+		height: 3rem;
+		border-width: 4px;
+	}
 
 </style>
 @code {
-    private Product newProduct = new() { ImageUrl = "", CategoryId = 0 };
-    private IEnumerable<Category> categories = Enumerable.Empty<Category>();
-    private string? errorMessage, successMessage;
-    private bool isUploading;
-    private bool isLoading = true;
-    private string? userRole;
-    private bool IsAdmin => userRole == "Admin";
-    private HubConnection? hubConnection;
+	private Product newProduct = new() { ImageUrl = "", CategoryId = 0 };
+	private IEnumerable<Category> categories = Enumerable.Empty<Category>();
+	private string? errorMessage, successMessage;
+	private bool isUploading;
+	private bool isLoading = true;
+	private string? userRole;
+	private bool IsAdmin => userRole == "Admin";
+	private HubConnection? hubConnection;
 
 
 
-    protected override async Task OnInitializedAsync()
-    {
-        try
-        {
-            hubConnection = new HubConnectionBuilder()
-                .WithUrl(Navigation.BaseUri + "hub")
-                .WithAutomaticReconnect()
-                .Build();
+	protected override async Task OnInitializedAsync()
+	{
+		try
+		{
+			hubConnection = new HubConnectionBuilder()
+				.WithUrl(Navigation.BaseUri + "hub")
+				.WithAutomaticReconnect()
+				.Build();
 
-            hubConnection.On<string>("Created", (productName) =>
-            {
-                successMessage = $"New product added: {productName}";
-                StateHasChanged();
-            });
+			hubConnection.On<string>("Created", (productName) =>
+			{
+				successMessage = $"New product added: {productName}";
+				StateHasChanged();
+			});
 
-            await hubConnection.StartAsync();
-            categories = await CategoryService.GetAll();
-        }
-        catch (Exception ex)
-        {
-            errorMessage = $"Error loading data: {ex.Message}";
-        }
-        finally
-        {
-            isLoading = false;
-            StateHasChanged();
-        }
-    }
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender)
-        {
-            userRole = await Auth.GetUserRoleAsync();
-            StateHasChanged(); // Trigger re-rendering after retrieving the role
-        }
-    }
+			await hubConnection.StartAsync();
+			categories = await CategoryService.GetAll();
+		}
+		catch (Exception ex)
+		{
+			errorMessage = $"Error loading data: {ex.Message}";
+		}
+		finally
+		{
+			isLoading = false;
+			StateHasChanged();
+		}
+	}
+	protected override async Task OnAfterRenderAsync(bool firstRender)
+	{
+		if (firstRender)
+		{
+			userRole = await Auth.GetUserRoleAsync();
+			StateHasChanged(); // Trigger re-rendering after retrieving the role
+		}
+	}
 
 
-    private async Task HandleFileSelected(InputFileChangeEventArgs e)
-    {
-        try
-        {
-            if (e.File == null)
-            {
-                errorMessage = "Please select a file.";
-                return;
-            }
+	private async Task HandleFileSelected(InputFileChangeEventArgs e)
+	{
+		try
+		{
+			if (e.File == null)
+			{
+				errorMessage = "Please select a file.";
+				return;
+			}
 
-            if (!new[] { ".jpg", ".jpeg", ".png", ".gif" }.Contains(Path.GetExtension(e.File.Name).ToLower()))
-            {
-                errorMessage = "Please select an image file (.jpg, .jpeg, .png, .gif).";
-                return;
-            }
+			if (!new[] { ".jpg", ".jpeg", ".png", ".gif" }.Contains(Path.GetExtension(e.File.Name).ToLower()))
+			{
+				errorMessage = "Please select an image file (.jpg, .jpeg, .png, .gif).";
+				return;
+			}
 
-            isUploading = true;
-            errorMessage = successMessage = null;
-            StateHasChanged();
+			isUploading = true;
+			errorMessage = successMessage = null;
+			StateHasChanged();
 
-            using var memoryStream = new MemoryStream();
-            await e.File.OpenReadStream(maxAllowedSize: 1024 * 1024 * 10).CopyToAsync(memoryStream);
-            memoryStream.Position = 0;
+			using var memoryStream = new MemoryStream();
+			await e.File.OpenReadStream(maxAllowedSize: 1024 * 1024 * 10).CopyToAsync(memoryStream);
+			memoryStream.Position = 0;
 
-            var uploadResult = await Cloudinary.UploadAsync(new ImageUploadParams
-                {
-                    File = new FileDescription(e.File.Name, memoryStream),
-                    Folder = "asset",
-                    Timestamp = DateTime.UtcNow
-                });
+			var uploadResult = await Cloudinary.UploadAsync(new ImageUploadParams
+				{
+					File = new FileDescription(e.File.Name, memoryStream),
+					Folder = "asset",
+					Timestamp = DateTime.UtcNow
+				});
 
-            if (uploadResult.Error != null)
-            {
-                errorMessage = $"Error uploading image: {uploadResult.Error.Message}";
-                return;
-            }
+			if (uploadResult.Error != null)
+			{
+				errorMessage = $"Error uploading image: {uploadResult.Error.Message}";
+				return;
+			}
 
-            newProduct.ImageUrl = uploadResult.SecureUrl.ToString();
-            successMessage = "Image uploaded successfully!";
-        }
-        catch (Exception ex)
-        {
-            errorMessage = $"Error uploading image: {ex.Message}";
-        }
-        finally
-        {
-            isUploading = false;
-            StateHasChanged();
-        }
-    }
+			newProduct.ImageUrl = uploadResult.SecureUrl.ToString();
+			successMessage = "Image uploaded successfully!";
+		}
+		catch (Exception ex)
+		{
+			errorMessage = $"Error uploading image: {ex.Message}";
+		}
+		finally
+		{
+			isUploading = false;
+			StateHasChanged();
+		}
+	}
 
-    private async Task AddProduct()
-    {
-        if (string.IsNullOrEmpty(newProduct.ProductName) || string.IsNullOrEmpty(newProduct.Weight))
-        {
-            errorMessage = "Product Name and Weight are required.";
-            return;
-        }
+	private async Task AddProduct()
+	{
+		if (string.IsNullOrEmpty(newProduct.ProductName) || string.IsNullOrEmpty(newProduct.Weight))
+		{
+			errorMessage = "Product Name and Weight are required.";
+			return;
+		}
 
-        if (newProduct.CategoryId == 0)
-        {
-            errorMessage = "Please select a category.";
-            return;
-        }
+		if (newProduct.CategoryId == 0)
+		{
+			errorMessage = "Please select a category.";
+			return;
+		}
 
-        try
-        {
-            await ProductService.Add(newProduct);
-            await hubConnection.SendAsync("SendMessage");
-            Navigation.NavigateTo("/products");
-        }
-        catch (Exception ex)
-        {
-            errorMessage = $"Error adding product: {ex.Message}";
-        }
-    }
+		try
+		{
+			await ProductService.Add(newProduct);
+			await hubConnection.SendAsync("SendMessage");
+			Navigation.NavigateTo("/products");
+		}
+		catch (Exception ex)
+		{
+			errorMessage = $"Error adding product: {ex.Message}";
+		}
+	}
 }

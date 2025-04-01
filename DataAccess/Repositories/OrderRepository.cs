@@ -1,11 +1,11 @@
-using Microsoft.EntityFrameworkCore;
-using BusinessObject.Models;
-using DataAccess.DBContext;
-using DataAccess.InterfaceRepo;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using BusinessObject.Models;
+using DataAccess.DBContext;
+using DataAccess.InterfaceRepo;
+using Microsoft.EntityFrameworkCore;
 
 namespace DataAccess.Repositories
 {
@@ -21,10 +21,10 @@ namespace DataAccess.Repositories
         public async Task<Order> GetOrderById(int orderId)
         {
             // Eager loading cả Member và OrderDetails, bao gồm Product trong OrderDetails
-            var order = await _context.Orders
-                .Include(o => o.Member)
+            var order = await _context
+                .Orders.Include(o => o.Member)
                 .Include(o => o.OrderDetails)
-                    .ThenInclude(od => od.Product) // Thêm dòng này để tải Product
+                .ThenInclude(od => od.Product) // Thêm dòng này để tải Product
                 .FirstOrDefaultAsync(o => o.OrderId == orderId);
 
             if (order == null)
@@ -37,7 +37,9 @@ namespace DataAccess.Repositories
             }
             else
             {
-                Console.WriteLine($"Order {orderId} loaded with {order.OrderDetails.Count} OrderDetails.");
+                Console.WriteLine(
+                    $"Order {orderId} loaded with {order.OrderDetails.Count} OrderDetails."
+                );
             }
 
             return order;
@@ -49,6 +51,14 @@ namespace DataAccess.Repositories
             return await _context.Orders
                 .Include(o => o.Member)
                 .Include(o => o.OrderDetails) // Load OrderDetails để tính TotalPrice
+            return await _context.Orders.Include(o => o.Member).ToListAsync();
+        }
+
+        public async Task<IEnumerable<Order>> GetAllOrdersByMemberId(int memberId)
+        {
+            return await _context
+                .Orders.Include(o => o.Member)
+                .Where(o => o.MemberId == memberId)
                 .ToListAsync();
         }
 
@@ -57,6 +67,13 @@ namespace DataAccess.Repositories
         {
             _context.Orders.Add(order);
             await _context.SaveChangesAsync();
+        }
+
+        public async Task<int> AddOrderReturn(Order order)
+        {
+            _context.Orders.Add(order);
+            await _context.SaveChangesAsync();
+            return order.OrderId;
         }
 
         public async Task UpdateOrder(Order order)
@@ -75,11 +92,16 @@ namespace DataAccess.Repositories
             }
         }
 
-        public async Task<IEnumerable<Order>> GetOrdersByDateRange(DateTime startDate, DateTime endDate)
+        public async Task<IEnumerable<Order>> GetOrdersByDateRange(
+            DateTime startDate,
+            DateTime endDate
+        )
         {
             return await _context.Orders
                 .Include(o => o.OrderDetails) // Load OrderDetails
                 .Where(o => o.OrderDate >= startDate && o.OrderDate <= endDate)
+            return await _context
+                .Orders.Where(o => o.OrderDate >= startDate && o.OrderDate <= endDate)
                 .ToListAsync();
         }
 
