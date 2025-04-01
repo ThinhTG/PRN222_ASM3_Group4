@@ -18,6 +18,9 @@ namespace eStore.DI
                 options.UseSqlServer(configuration.GetConnectionString("DbContext"));
             });
 
+             services.AddSignalR();
+
+
             services.AddSingleton<Cloudinary>(provider =>
             {
                 var configuration = provider.GetRequiredService<IConfiguration>();

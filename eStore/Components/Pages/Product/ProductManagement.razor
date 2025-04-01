@@ -246,17 +246,67 @@
 	private decimal? searchPrice = null;
 	private string errorMessage;
 	private bool isAdmin = false;
+	private HubConnection? hubConnection;
+
 	protected override async Task OnInitializedAsync()
 	{
 		try
 		{
+			// Xác thực và kiểm tra quyền admin
 			var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
 			var user = authState.User;
 			isAdmin = user.IsInRole("Admin");
+
+			// Tải danh sách sản phẩm ban đầu
+			await LoadProducts();
+
+			// Khởi tạo kết nối SignalR
+			hubConnection = new HubConnectionBuilder()
+				.WithUrl(Navigation.ToAbsoluteUri("/hub"))
+				.Build();
+
+			// Đăng ký các sự kiện từ Hub
+			hubConnection.On("Created", async () =>
+			{
+				await LoadProducts();
+				await InvokeAsync(StateHasChanged);
+			});
+
+			hubConnection.On("Updated", async () =>
+			{
+				await LoadProducts();
+				await InvokeAsync(StateHasChanged);
+			});
+
+			
+
+			hubConnection.On("Deleted", async () =>
+			{
+				await LoadProducts();
+				await InvokeAsync(StateHasChanged);
+			});
+
+			// Bắt đầu kết nối
+			await hubConnection.StartAsync();
+		}
+		catch (Exception ex)
+		{
+			errorMessage = $"Error initializing: {ex.Message}";
+		}
+	}
+
+	private async Task LoadProducts()
+	{
+		try
+		{
 			products = await ProductService.GetAll();
 			if (!products.Any())
 			{
 				errorMessage = "No products found. Please add a new product.";
+			}
+			else
+			{
+				errorMessage = null;
 			}
 		}
 		catch (Exception ex)
@@ -265,24 +315,31 @@
 		}
 	}
 
+	private async Task SearchProducts()
+	{
+		try
+		{
+			products = await ProductService.Search(searchName, searchPrice);
+			if (!products.Any())
+			{
+				errorMessage = "No products match your search criteria.";
+			}
+			else
+			{
+				errorMessage = null;
+			}
+		}
+		catch (Exception ex)
+		{
+			errorMessage = $"Error searching products: {ex.Message}";
+		}
+	}
 
-    private async Task SearchProducts()
-    {
-        try
-        {
-            products = await ProductService.Search(searchName, searchPrice);
-            if (!products.Any())
-            {
-                errorMessage = "No products match your search criteria.";
-            }
-            else
-            {
-                errorMessage = null;
-            }
-        }
-        catch (Exception ex)
-        {
-            errorMessage = $"Error searching products: {ex.Message}";
-        }
-    }
+	public async ValueTask DisposeAsync()
+	{
+		if (hubConnection is not null)
+		{
+			await hubConnection.DisposeAsync();
+		}
+	}
 }
