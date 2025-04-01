@@ -17,19 +17,20 @@
 				{
 					<NavLink class="btn btn-primary" href="/products/add">
 						<i class="bi bi-plus-circle me-2"></i>Add New Product
-				</NavLink>
+					</NavLink>
 				}
 				<div class="d-flex gap-3">
 					<div class="input-group w-auto">
 						<span class="input-group-text"><i class="bi bi-search"></i></span>
 						<input type="text" class="form-control" placeholder="Search by name"
-							   @bind="searchName" @bind:event="oninput" />
+							   @bind="SearchName" @bind:event="oninput" />
 					</div>
 					<div class="input-group w-auto">
 						<span class="input-group-text">$</span>
 						<input type="number" class="form-control" placeholder="Search by price"
-							   @bind="searchPrice" @bind:event="oninput" />
+							   @bind="SearchPrice" @bind:event="oninput" />
 					</div>
+					<!-- Nút Filter không cần thiết cho tìm kiếm real-time, nhưng giữ lại nếu bạn muốn -->
 					<button class="btn btn-outline-secondary" @onclick="SearchProducts">
 						<i class="bi bi-funnel me-2"></i>Filter
 					</button>
@@ -106,6 +107,8 @@
 		</div>
 	</div>
 </CascadingAuthenticationState>
+
+<!-- CSS giữ nguyên như mã gốc của bạn -->
 
 <style>
 	/* Global Styles */
@@ -247,6 +250,35 @@
 	private string errorMessage;
 	private bool isAdmin = false;
 	private HubConnection? hubConnection;
+	private CancellationTokenSource? debounceCts; // Để hỗ trợ debouncing
+
+	// Thuộc tính SearchName với getter và setter
+	private string SearchName
+	{
+		get => searchName;
+		set
+		{
+			if (searchName != value)
+			{
+				searchName = value;
+				_ = SearchProducts(); // Gọi không đồng bộ để tìm kiếm real-time
+			}
+		}
+	}
+
+	// Thuộc tính SearchPrice với getter và setter
+	private decimal? SearchPrice
+	{
+		get => searchPrice;
+		set
+		{
+			if (searchPrice != value)
+			{
+				searchPrice = value;
+				_ = SearchProducts(); // Gọi không đồng bộ để tìm kiếm real-time
+			}
+		}
+	}
 
 	protected override async Task OnInitializedAsync()
 	{
@@ -277,8 +309,6 @@
 				await LoadProducts();
 				await InvokeAsync(StateHasChanged);
 			});
-
-			
 
 			hubConnection.On("Deleted", async () =>
 			{
@@ -317,8 +347,15 @@
 
 	private async Task SearchProducts()
 	{
+		// Hủy tìm kiếm trước đó nếu người dùng nhập nhanh
+		debounceCts?.Cancel();
+		debounceCts = new CancellationTokenSource();
+
 		try
 		{
+			// Trì hoãn 300ms để giảm số lần gọi API
+			await Task.Delay(300, debounceCts.Token);
+
 			products = await ProductService.Search(searchName, searchPrice);
 			if (!products.Any())
 			{
@@ -328,10 +365,16 @@
 			{
 				errorMessage = null;
 			}
+			await InvokeAsync(StateHasChanged); // Cập nhật giao diện
+		}
+		catch (TaskCanceledException)
+		{
+			// Bỏ qua nếu bị hủy bởi debouncing
 		}
 		catch (Exception ex)
 		{
 			errorMessage = $"Error searching products: {ex.Message}";
+			await InvokeAsync(StateHasChanged);
 		}
 	}
 
@@ -340,6 +383,11 @@
 		if (hubConnection is not null)
 		{
 			await hubConnection.DisposeAsync();
+		}
+		if (debounceCts is not null)
+		{
+			debounceCts.Cancel();
+			debounceCts.Dispose();
 		}
 	}
 }
