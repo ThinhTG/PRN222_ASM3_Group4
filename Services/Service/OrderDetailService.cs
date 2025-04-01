@@ -21,6 +21,18 @@ public class OrderDetailService : IOrderDetailService
         return await _orderDetailRepository.GetOrderDetailsByOrderId(orderId);
     }
 
+    public async Task<OrderDetail> GetOrderDetailByProductIdWithNullOrderId(
+        int productId,
+        int memberId
+    )
+    {
+        // You'll need to add this method to your repository too
+        return await _orderDetailRepository.GetOrderDetailByProductIdWithNullOrderId(
+            productId,
+            memberId
+        );
+    }
+
     public async Task<OrderDetail> GetOrderDetail(int orderId, int productId)
     {
         return await _orderDetailRepository.GetOrderDetail(orderId, productId);
@@ -33,7 +45,13 @@ public class OrderDetailService : IOrderDetailService
 
     public async Task UpdateOrderDetail(OrderDetail orderDetail)
     {
-        var existingDetail = await _orderDetailRepository.GetOrderDetail(orderDetail.OrderId, orderDetail.ProductId);
+        //var existingDetail = await _orderDetailRepository.GetOrderDetail(
+        //    orderDetail.OrderId,
+        //    orderDetail.ProductId
+        //);
+        var existingDetail = await _orderDetailRepository.GetOrderDetailById(
+            orderDetail.OrderDetailId
+        );
         if (existingDetail != null)
         {
             _mapper.Map(orderDetail, existingDetail);
@@ -44,5 +62,15 @@ public class OrderDetailService : IOrderDetailService
     public async Task DeleteOrderDetail(int orderId, int productId)
     {
         await _orderDetailRepository.DeleteOrderDetail(orderId, productId);
+    }
+
+    public async Task DeleteOrderDetailById(int orderDetailId)
+    {
+        await _orderDetailRepository.DeleteOrderDetailById(orderDetailId);
+    }
+
+    public async Task<IEnumerable<OrderDetail>> GetOrderDetailsByMemberId(int memberId)
+    {
+        return await _orderDetailRepository.GetOrderDetailsByMemberId(memberId);
     }
 }

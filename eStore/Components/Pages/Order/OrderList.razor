@@ -13,6 +13,9 @@
 else if (!string.IsNullOrEmpty(errorMessage))
 {
     <div class="alert alert-danger">@errorMessage</div>
+    <div class="mb-3">
+        <a href="/orders/add" class="btn btn-primary">Create New Order</a>
+    </div>
 }
 else
 {
