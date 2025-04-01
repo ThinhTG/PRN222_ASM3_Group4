@@ -2,6 +2,7 @@
 @using BusinessObject.Models
 @using CloudinaryDotNet
 @using CloudinaryDotNet.Actions
+@using Microsoft.AspNetCore.Components.Authorization
 @inject Services.InterfaceService.IProductService ProductService
 @inject Services.InterfaceService.ICategoryService CategoryService
 @inject NavigationManager Navigation
@@ -17,21 +18,21 @@
 <div class="container mt-4">
     <h3 class="mb-4 text-primary">Add New Product</h3>
 
-    @if (!string.IsNullOrEmpty(errorMessage))
-    {
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            @errorMessage
-            <button type="button" class="btn-close" @onclick="() => errorMessage = null"></button>
-        </div>
-    }
+				@if (!string.IsNullOrEmpty(errorMessage))
+				{
+					<div class="alert alert-danger alert-dismissible fade show" role="alert">
+						@errorMessage
+						<button type="button" class="btn-close" @onclick="() => errorMessage = null"></button>
+					</div>
+				}
 
-    @if (!string.IsNullOrEmpty(successMessage))
-    {
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            @successMessage
-            <button type="button" class="btn-close" @onclick="() => successMessage = null"></button>
-        </div>
-    }
+				@if (!string.IsNullOrEmpty(successMessage))
+				{
+					<div class="alert alert-success alert-dismissible fade show" role="alert">
+						@successMessage
+						<button type="button" class="btn-close" @onclick="() => successMessage = null"></button>
+					</div>
+				}
 
     @if (isLoading)
     {
@@ -128,107 +129,107 @@
 </div>
 
 <style>
-    /* Title Styling */
-    h3.text-primary {
-        font-weight: 800;
-        text-transform: uppercase;
-        letter-spacing: 2px;
-        color: #007bff;
-        text-align: center;
-        background: linear-gradient(90deg, #007bff, #00c6ff);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        font-size: 2rem;
-        padding-bottom: 10px;
-        border-bottom: 3px solid #007bff;
-        display: inline-block;
-        box-shadow: 0px 2px 5px rgba(0, 123, 255, 0.2);
-    }
+	/* Title Styling */
+	h3.text-primary {
+		font-weight: 800;
+		text-transform: uppercase;
+		letter-spacing: 2px;
+		color: #007bff;
+		text-align: center;
+		background: linear-gradient(90deg, #007bff, #00c6ff);
+		-webkit-background-clip: text;
+		-webkit-text-fill-color: transparent;
+		font-size: 2rem;
+		padding-bottom: 10px;
+		border-bottom: 3px solid #007bff;
+		display: inline-block;
+		box-shadow: 0px 2px 5px rgba(0, 123, 255, 0.2);
+	}
 
-    /* Card Styling */
-    .card {
-        border-radius: 15px;
-        border: none;
-        box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.15);
-        background: #ffffff;
-        padding: 20px;
-    }
+	/* Card Styling */
+	.card {
+		border-radius: 15px;
+		border: none;
+		box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.15);
+		background: #ffffff;
+		padding: 20px;
+	}
 
-        .card .btn {
-            border-radius: 10px;
-            transition: all 0.3s ease-in-out;
-        }
+		.card .btn {
+			border-radius: 10px;
+			transition: all 0.3s ease-in-out;
+		}
 
-    /* Form Elements */
-    .form-control {
-        border-radius: 10px;
-        transition: 0.3s;
-    }
+	/* Form Elements */
+	.form-control {
+		border-radius: 10px;
+		transition: 0.3s;
+	}
 
-        .form-control:focus {
-            border-color: #007bff;
-            box-shadow: 0 0 8px rgba(0, 123, 255, 0.5);
-        }
+		.form-control:focus {
+			border-color: #007bff;
+			box-shadow: 0 0 8px rgba(0, 123, 255, 0.5);
+		}
 
-    .input-group-text {
-        background-color: #007bff;
-        color: white;
-        border-radius: 10px 0 0 10px;
-    }
+	.input-group-text {
+		background-color: #007bff;
+		color: white;
+		border-radius: 10px 0 0 10px;
+	}
 
-    /* Buttons */
-    .btn {
-        transition: all 0.3s ease-in-out;
-        border-radius: 10px;
-    }
+	/* Buttons */
+	.btn {
+		transition: all 0.3s ease-in-out;
+		border-radius: 10px;
+	}
 
-        .btn:hover {
-            transform: scale(1.05);
-        }
+		.btn:hover {
+			transform: scale(1.05);
+		}
 
-    .btn-primary {
-        background-color: #007bff;
-        border-color: #007bff;
-    }
+	.btn-primary {
+		background-color: #007bff;
+		border-color: #007bff;
+	}
 
-        .btn-primary:hover {
-            background-color: #0056b3;
-            border-color: #0056b3;
-        }
+		.btn-primary:hover {
+			background-color: #0056b3;
+			border-color: #0056b3;
+		}
 
-    .btn-outline-secondary {
-        border-color: #6c757d;
-        color: #6c757d;
-    }
+	.btn-outline-secondary {
+		border-color: #6c757d;
+		color: #6c757d;
+	}
 
-        .btn-outline-secondary:hover {
-            background-color: #6c757d;
-            color: white;
-        }
+		.btn-outline-secondary:hover {
+			background-color: #6c757d;
+			color: white;
+		}
 
-    /* Image Upload */
-    .img-thumbnail {
-        border-radius: 10px;
-        transition: 0.3s;
-        border: 2px solid #007bff;
-    }
+	/* Image Upload */
+	.img-thumbnail {
+		border-radius: 10px;
+		transition: 0.3s;
+		border: 2px solid #007bff;
+	}
 
-        .img-thumbnail:hover {
-            transform: scale(1.1);
-            box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.2);
-        }
+		.img-thumbnail:hover {
+			transform: scale(1.1);
+			box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.2);
+		}
 
-    /* Alerts */
-    .alert {
-        border-radius: 10px;
-    }
+	/* Alerts */
+	.alert {
+		border-radius: 10px;
+	}
 
-    /* Loading Spinner */
-    .spinner-border {
-        width: 3rem;
-        height: 3rem;
-        border-width: 4px;
-    }
+	/* Loading Spinner */
+	.spinner-border {
+		width: 3rem;
+		height: 3rem;
+		border-width: 4px;
+	}
 
 </style>
 
@@ -272,70 +273,70 @@
     }
 
 
-    private async Task HandleFileSelected(InputFileChangeEventArgs e)
-    {
-        try
-        {
-            if (e.File == null)
-            {
-                errorMessage = "Please select a file.";
-                return;
-            }
+	private async Task HandleFileSelected(InputFileChangeEventArgs e)
+	{
+		try
+		{
+			if (e.File == null)
+			{
+				errorMessage = "Please select a file.";
+				return;
+			}
 
-            if (!new[] { ".jpg", ".jpeg", ".png", ".gif" }.Contains(Path.GetExtension(e.File.Name).ToLower()))
-            {
-                errorMessage = "Please select an image file (.jpg, .jpeg, .png, .gif).";
-                return;
-            }
+			if (!new[] { ".jpg", ".jpeg", ".png", ".gif" }.Contains(Path.GetExtension(e.File.Name).ToLower()))
+			{
+				errorMessage = "Please select an image file (.jpg, .jpeg, .png, .gif).";
+				return;
+			}
 
-            isUploading = true;
-            errorMessage = successMessage = null;
-            StateHasChanged();
+			isUploading = true;
+			errorMessage = successMessage = null;
+			StateHasChanged();
 
-            using var memoryStream = new MemoryStream();
-            await e.File.OpenReadStream(maxAllowedSize: 1024 * 1024 * 10).CopyToAsync(memoryStream);
-            memoryStream.Position = 0;
+			using var memoryStream = new MemoryStream();
+			await e.File.OpenReadStream(maxAllowedSize: 1024 * 1024 * 10).CopyToAsync(memoryStream);
+			memoryStream.Position = 0;
 
-            var uploadResult = await Cloudinary.UploadAsync(new ImageUploadParams
-                {
-                    File = new FileDescription(e.File.Name, memoryStream),
-                    Folder = "asset",
-                    Timestamp = DateTime.UtcNow
-                });
+			var uploadResult = await Cloudinary.UploadAsync(new ImageUploadParams
+				{
+					File = new FileDescription(e.File.Name, memoryStream),
+					Folder = "asset",
+					Timestamp = DateTime.UtcNow
+				});
 
-            if (uploadResult.Error != null)
-            {
-                errorMessage = $"Error uploading image: {uploadResult.Error.Message}";
-                return;
-            }
+			if (uploadResult.Error != null)
+			{
+				errorMessage = $"Error uploading image: {uploadResult.Error.Message}";
+				return;
+			}
 
-            newProduct.ImageUrl = uploadResult.SecureUrl.ToString();
-            successMessage = "Image uploaded successfully!";
-        }
-        catch (Exception ex)
-        {
-            errorMessage = $"Error uploading image: {ex.Message}";
-        }
-        finally
-        {
-            isUploading = false;
-            StateHasChanged();
-        }
-    }
+			newProduct.ImageUrl = uploadResult.SecureUrl.ToString();
+			successMessage = "Image uploaded successfully!";
+		}
+		catch (Exception ex)
+		{
+			errorMessage = $"Error uploading image: {ex.Message}";
+		}
+		finally
+		{
+			isUploading = false;
+			StateHasChanged();
+		}
+	}
 
-    private async Task AddProduct()
-    {
-        if (string.IsNullOrEmpty(newProduct.ProductName) || string.IsNullOrEmpty(newProduct.Weight))
-        {
-            errorMessage = "Product Name and Weight are required.";
-            return;
-        }
+	private async Task AddProduct()
+	{
+		if (string.IsNullOrEmpty(newProduct.ProductName) || string.IsNullOrEmpty(newProduct.Weight))
+		{
+			errorMessage = "Product Name and Weight are required.";
+			return;
+		}
 
-        if (newProduct.CategoryId == 0)
-        {
-            errorMessage = "Please select a category.";
-            return;
-        }
+		if (newProduct.CategoryId == 0)
+		{
+			errorMessage = "Please select a category.";
+			return;
+		}
 
         try
         {

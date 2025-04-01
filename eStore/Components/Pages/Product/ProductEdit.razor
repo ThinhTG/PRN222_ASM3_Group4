@@ -2,12 +2,17 @@
 @using BusinessObject.Models
 @using CloudinaryDotNet
 @using CloudinaryDotNet.Actions
+@using Microsoft.AspNetCore.Components.Authorization
 @inject Services.InterfaceService.IProductService ProductService
 @inject Services.InterfaceService.ICategoryService CategoryService
 @inject NavigationManager Navigation
 @inject Cloudinary Cloudinary
 @rendermode InteractiveServer
+<CascadingAuthenticationState>
+	<h3>Products</h3>
 
+	<AuthorizeView>
+		<Authorized Context="authContext">
 <div class="container mt-4">
     <h3 class="mb-4 text-primary">Edit Product</h3>
 
@@ -130,7 +135,12 @@
         </div>
     }
 </div>
-
+		</Authorized>
+		<NotAuthorized>
+			<p class="text-danger">Bạn không có quyền truy cập.</p>
+		</NotAuthorized>
+	</AuthorizeView>
+</CascadingAuthenticationState>
 <style>
     .container {
         max-width: 800px;

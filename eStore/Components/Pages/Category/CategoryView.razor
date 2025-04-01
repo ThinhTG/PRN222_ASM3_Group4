@@ -1,115 +1,127 @@
 ﻿@page "/categories/details/{Id:int}"
 @using BusinessObject.Models
+@using Microsoft.AspNetCore.Components.Authorization
 @inject Services.InterfaceService.ICategoryService CategoryService
 @inject NavigationManager Navigation
 @rendermode InteractiveServer
+<CascadingAuthenticationState>
+	<h3>Categories</h3>
 
-<div class="container mt-5">
-    <h3 class="mb-4 text-primary fw-bold">Category Details</h3>
+	<AuthorizeView>
+		<Authorized Context="authContext">
+			<div class="container mt-5">
+				<h3 class="mb-4 text-primary fw-bold">Category Details</h3>
 
-    @if (category == null)
-    {
-        <div class="text-center my-5">
-            <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">Loading...</span>
-            </div>
-            <p class="text-muted mt-2">Loading category details...</p>
-        </div>
-    }
-    else if (!string.IsNullOrEmpty(errorMessage))
-    {
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            @errorMessage
-            <button type="button" class="btn-close" @onclick="() => errorMessage = null"></button>
-        </div>
-    }
-    else
-    {
-        <div class="card shadow-lg border-0 rounded-3 p-4 animate__animated animate__fadeIn">
-            <div class="row g-4">
-                <div class="col-md-4">
-                    <div class="text-center p-4 bg-light rounded-3">
-                        <i class="bi bi-tags-fill text-muted" style="font-size: 3rem;"></i>
-                        <p class="text-muted mt-2">Category Icon</p>
-                    </div>
-                </div>
-                <div class="col-md-8">
-                    <h4 class="fw-bold text-dark mb-3">@category.CategoryName</h4>
-                    <hr class="my-4" style="border-color: #dee2e6;" />
-                    <dl class="row mb-4">
-                        <dt class="col-sm-3 text-muted">ID</dt>
-                        <dd class="col-sm-9 text-dark">@category.CategoryId</dd>
-                        <dt class="col-sm-3 text-muted">Description</dt>
-                        <dd class="col-sm-9 text-dark">@(string.IsNullOrEmpty(category.Description) ? "N/A" : category.Description)</dd>
-                    </dl>
-                    <div class="d-flex gap-2">
-                        <NavLink class="btn btn-primary btn-lg px-4 shadow-sm" href="@($"/categories/edit/{category.CategoryId}")">
-                            <i class="bi bi-pencil me-2"></i>Edit
-                        </NavLink>
-                        <NavLink class="btn btn-outline-secondary btn-lg px-4 shadow-sm" href="/categories">
-                            <i class="bi bi-arrow-left me-2"></i>Back to List
-                        </NavLink>
-                    </div>
-                </div>
-            </div>
-        </div>
-    }
-</div>
+				@if (category == null)
+				{
+					<div class="text-center my-5">
+						<div class="spinner-border text-primary" role="status">
+							<span class="visually-hidden">Loading...</span>
+						</div>
+						<p class="text-muted mt-2">Loading category details...</p>
+					</div>
+				}
+				else if (!string.IsNullOrEmpty(errorMessage))
+				{
+					<div class="alert alert-danger alert-dismissible fade show" role="alert">
+						@errorMessage
+						<button type="button" class="btn-close" @onclick="() => errorMessage = null"></button>
+					</div>
+				}
+				else
+				{
+					<div class="card shadow-lg border-0 rounded-3 p-4 animate__animated animate__fadeIn">
+						<div class="row g-4">
+							<div class="col-md-4">
+								<div class="text-center p-4 bg-light rounded-3">
+									<i class="bi bi-tags-fill text-muted" style="font-size: 3rem;"></i>
+									<p class="text-muted mt-2">Category Icon</p>
+								</div>
+							</div>
+							<div class="col-md-8">
+								<h4 class="fw-bold text-dark mb-3">@category.CategoryName</h4>
+								<hr class="my-4" style="border-color: #dee2e6;" />
+								<dl class="row mb-4">
+									<dt class="col-sm-3 text-muted">ID</dt>
+									<dd class="col-sm-9 text-dark">@category.CategoryId</dd>
+									<dt class="col-sm-3 text-muted">Description</dt>
+									<dd class="col-sm-9 text-dark">@(string.IsNullOrEmpty(category.Description) ? "N/A" : category.Description)</dd>
+								</dl>
+								<div class="d-flex gap-2">
+									<NavLink class="btn btn-primary btn-lg px-4 shadow-sm" href="@($"/categories/edit/{category.CategoryId}")">
+										<i class="bi bi-pencil me-2"></i>Edit
+									</NavLink>
+									<NavLink class="btn btn-outline-secondary btn-lg px-4 shadow-sm" href="/categories">
+										<i class="bi bi-arrow-left me-2"></i>Back to List
+									</NavLink>
+								</div>
+							</div>
+						</div>
+					</div>
+				}
+			</div>
+		</Authorized>
+		<NotAuthorized>
+			<p class="text-danger">Bạn không có quyền truy cập.</p>
+		</NotAuthorized>
+	</AuthorizeView>
 
+
+</CascadingAuthenticationState>
 <style>
-    .card {
-        background-color: #fff;
-        transition: transform 0.2s ease, box-shadow 0.3s ease;
-    }
+	.card {
+		background-color: #fff;
+		transition: transform 0.2s ease, box-shadow 0.3s ease;
+	}
 
-        .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1) !important;
-        }
+		.card:hover {
+			transform: translateY(-5px);
+			box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1) !important;
+		}
 
-    .badge {
-        font-size: 0.9rem;
-        padding: 0.5em 1em;
-    }
+	.badge {
+		font-size: 0.9rem;
+		padding: 0.5em 1em;
+	}
 
-    .btn-lg {
-        font-size: 1.1rem;
-        border-radius: 8px;
-    }
+	.btn-lg {
+		font-size: 1.1rem;
+		border-radius: 8px;
+	}
 
-    .text-primary {
-        color: #0d6efd !important;
-    }
+	.text-primary {
+		color: #0d6efd !important;
+	}
 
-    .text-dark {
-        color: #343a40 !important;
-    }
+	.text-dark {
+		color: #343a40 !important;
+	}
 
-    .text-muted {
-        color: #6c757d !important;
-    }
+	.text-muted {
+		color: #6c757d !important;
+	}
 </style>
 
 @code {
-    [Parameter]
-    public int Id { get; set; }
+	[Parameter]
+	public int Id { get; set; }
 
-    private Category category;
-    private string errorMessage;
+	private Category category;
+	private string errorMessage;
 
-    protected override async Task OnInitializedAsync()
-    {
-        try
-        {
-            category = CategoryService.GetById(Id);
-            if (category == null)
-            {
-                errorMessage = "Category not found.";
-            }
-        }
-        catch (Exception ex)
-        {
-            errorMessage = $"Error loading category: {ex.Message}";
-        }
-    }
+	protected override async Task OnInitializedAsync()
+	{
+		try
+		{
+			category = CategoryService.GetById(Id);
+			if (category == null)
+			{
+				errorMessage = "Category not found.";
+			}
+		}
+		catch (Exception ex)
+		{
+			errorMessage = $"Error loading category: {ex.Message}";
+		}
+	}
 }

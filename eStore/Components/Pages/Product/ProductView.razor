@@ -1,9 +1,11 @@
 ﻿@page "/products/details/{Id:int}"
 @using BusinessObject.Models
+@using Microsoft.AspNetCore.Components.Authorization
 @inject Services.InterfaceService.IProductService ProductService
 @inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthenticationStateProvider
 @rendermode InteractiveServer
-
+<CascadingAuthenticationState>
 <div class="container mt-5">
     <h3 class="mb-4 text-primary fw-bold">Product Details</h3>
 
@@ -66,10 +68,13 @@
                         </dd>
                     </dl>
                     <div class="d-flex gap-2">
-                        <NavLink class="btn btn-primary btn-lg px-4 shadow-sm" href="@($"/products/edit/{product.ProductId}")">
-                            <i class="bi bi-pencil me-2"></i>Edit
-                        </NavLink>
-                        <NavLink class="btn btn-outline-secondary btn-lg px-4 shadow-sm" href="/products">
+                            @if (isAdmin)
+                            {
+                                <NavLink class="btn btn-primary btn-lg px-4 shadow-sm" href="@($"/products/edit/{product.ProductId}")">
+                                    <i class="bi bi-pencil me-2"></i>Edit
+                                </NavLink>
+                            }
+                            <NavLink class="btn btn-outline-secondary btn-lg px-4 shadow-sm" href="/products">
                             <i class="bi bi-arrow-left me-2"></i>Back to List
                         </NavLink>
                     </div>
@@ -78,7 +83,7 @@
         </div>
     }
 </div>
-
+</CascadingAuthenticationState>
 <style>
     .card {
         background-color: #fff;
@@ -134,10 +139,15 @@
     private Product product;
     private string errorMessage;
 
+    private bool isAdmin;
+
     protected override async Task OnInitializedAsync()
     {
         try
         {
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+            isAdmin = user.IsInRole("Admin");
             product = ProductService.GetById(Id);
             if (product == null)
             {

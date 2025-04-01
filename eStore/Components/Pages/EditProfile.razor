@@ -1,0 +1,285 @@
+﻿@page "/editprofile"
+@using BusinessObject.Models
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.ComponentModel.DataAnnotations
+@using System.Security.Claims
+@using System.IdentityModel.Tokens.Jwt
+@inject Services.InterfaceService.IMemberService MemberService
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
+@rendermode InteractiveServer
+@using System.Text.Json;
+
+<CascadingAuthenticationState>
+    <AuthorizeView>
+        <Authorized Context="authContext">
+            <h3>Edit Profile</h3>
+            @if (isLoading)
+            {
+                <p>Loading your profile...</p>
+            }
+            else
+            {
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>Profile Information</h5>
+                            </div>
+                            <div class="card-body">
+                                <EditForm Model="@memberModel" OnValidSubmit="UpdateProfile">
+                                    <DataAnnotationsValidator />
+                                    <ValidationSummary />
+
+                                    <div class="mb-3">
+                                        <label for="companyName" class="form-label">Company Name</label>
+                                        <InputText id="companyName" @bind-Value="memberModel.CompanyName" class="form-control" />
+                                        <ValidationMessage For="@(() => memberModel.CompanyName)" />
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="email" class="form-label">Email</label>
+                                        <InputText id="email" @bind-Value="memberModel.Email" class="form-control" readonly />
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="city" class="form-label">City</label>
+                                        <InputText id="city" @bind-Value="memberModel.City" class="form-control" />
+                                        <ValidationMessage For="@(() => memberModel.City)" />
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="country" class="form-label">Country</label>
+                                        <InputText id="country" @bind-Value="memberModel.Country" class="form-control" />
+                                        <ValidationMessage For="@(() => memberModel.Country)" />
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <button type="submit" class="btn btn-primary">Update Profile</button>
+                                    </div>
+                                </EditForm>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>Change Password</h5>
+                            </div>
+                            <div class="card-body">
+                                <EditForm Model="@passwordModel" OnValidSubmit="ChangePassword">
+                                    <DataAnnotationsValidator />
+                                    <ValidationSummary />
+
+                                    <div class="mb-3">
+                                        <label for="currentPassword" class="form-label">Current Password</label>
+                                        <InputText type="password" id="currentPassword" @bind-Value="passwordModel.CurrentPassword" class="form-control" />
+                                        <ValidationMessage For="@(() => passwordModel.CurrentPassword)" />
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="newPassword" class="form-label">New Password</label>
+                                        <InputText type="password" id="newPassword" @bind-Value="passwordModel.NewPassword" class="form-control" />
+                                        <ValidationMessage For="@(() => passwordModel.NewPassword)" />
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="confirmPassword" class="form-label">Confirm Password</label>
+                                        <InputText type="password" id="confirmPassword" @bind-Value="passwordModel.ConfirmPassword" class="form-control" />
+                                        <ValidationMessage For="@(() => passwordModel.ConfirmPassword)" />
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <button type="submit" class="btn btn-primary">Change Password</button>
+                                    </div>
+                                </EditForm>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                @if (!string.IsNullOrEmpty(message))
+                {
+                    <div class="alert @alertClass mt-3">
+                        @message
+                    </div>
+                }
+            }
+        </Authorized>
+        <NotAuthorized>
+            <p class="text-danger">Bạn cần đăng nhập để truy cập trang này.</p>
+        </NotAuthorized>
+    </AuthorizeView>
+</CascadingAuthenticationState>
+
+@code {
+    private Member memberModel = new Member();
+    private PasswordChangeModel passwordModel = new PasswordChangeModel();
+    private bool isLoading = true;
+    private string message = string.Empty;
+    private string alertClass = string.Empty;
+
+    // The exact claim type for email in your JWT
+    private const string EmailClaimType = "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress";
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity.IsAuthenticated)
+        {
+            try
+            {
+                // Get the token directly from session storage
+                string token = await JSRuntime.InvokeAsync<string>("sessionStorage.getItem", "authToken");
+
+                if (!string.IsNullOrEmpty(token))
+                {
+                    // Manually parse the token to extract claims
+                    string[] tokenParts = token.Split('.');
+                    if (tokenParts.Length == 3) // JWT format: header.payload.signature
+                    {
+                        // Decode the payload part (middle part)
+                        string payloadJson = DecodeBase64Url(tokenParts[1]);
+
+                        // Log or check payload content
+                        Console.WriteLine("Token payload: " + payloadJson);
+
+                        // Parse JSON manually
+                        using (JsonDocument doc = JsonDocument.Parse(payloadJson))
+                        {
+                            JsonElement root = doc.RootElement;
+
+                            // Check for email claim
+                            if (root.TryGetProperty("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress", out JsonElement emailElement))
+                            {
+                                string email = emailElement.GetString();
+                                await LoadMemberDataByEmail(email);
+                            }
+                            else
+                            {
+                                message = "Email claim not found in token. Available claims: " + payloadJson;
+                                alertClass = "alert-danger";
+                            }
+                        }
+                    }
+                    else
+                    {
+                        message = "Invalid JWT token format.";
+                        alertClass = "alert-danger";
+                    }
+                }
+                else
+                {
+                    message = "Authentication token not found.";
+                    alertClass = "alert-danger";
+                }
+            }
+            catch (Exception ex)
+            {
+                message = $"Error processing authentication data: {ex.Message}";
+                alertClass = "alert-danger";
+            }
+        }
+
+        isLoading = false;
+    }
+
+    // Helper method to decode base64url encoding
+    private string DecodeBase64Url(string base64Url)
+    {
+        string padded = base64Url.Replace('-', '+').Replace('_', '/');
+        switch (padded.Length % 4)
+        {
+            case 2: padded += "=="; break;
+            case 3: padded += "="; break;
+        }
+        byte[] bytes = Convert.FromBase64String(padded);
+        return System.Text.Encoding.UTF8.GetString(bytes);
+    }
+
+    private async Task LoadMemberDataByEmail(string email)
+    {
+        try
+        {
+            var member = await MemberService.GetMemberByEmailAsync(email);
+            if (member != null)
+            {
+                memberModel = member;
+            }
+            else
+            {
+                message = "Failed to load your profile.";
+                alertClass = "alert-danger";
+            }
+        }
+        catch (Exception ex)
+        {
+            message = $"Error loading profile: {ex.Message}";
+            alertClass = "alert-danger";
+        }
+    }
+
+    private async Task UpdateProfile()
+    {
+        try
+        {
+            await MemberService.UpdateMemberAsync(memberModel);
+            message = "Profile updated successfully.";
+            alertClass = "alert-success";
+        }
+        catch (Exception ex)
+        {
+            message = $"Error updating profile: {ex.Message}";
+            alertClass = "alert-danger";
+        }
+    }
+
+    private async Task ChangePassword()
+    {
+        // Verify passwords match
+        if (passwordModel.NewPassword != passwordModel.ConfirmPassword)
+        {
+            message = "New password and confirmation do not match.";
+            alertClass = "alert-danger";
+            return;
+        }
+
+        try
+        {
+            await MemberService.ChangePasswordAsync(
+                memberModel.MemberId,
+                passwordModel.CurrentPassword,
+                passwordModel.NewPassword
+            );
+
+            message = "Password changed successfully.";
+            alertClass = "alert-success";
+            passwordModel = new PasswordChangeModel(); // Clear password fields
+        }
+        catch (Exception ex)
+        {
+            message = $"Error changing password: {ex.Message}";
+            alertClass = "alert-danger";
+        }
+    }
+
+    // Model for password change form
+    public class PasswordChangeModel
+    {
+        [Required(ErrorMessage = "Current password is required")]
+        public string CurrentPassword { get; set; }
+
+        [Required(ErrorMessage = "New password is required")]
+        [MinLength(6, ErrorMessage = "Password must be at least 6 characters")]
+        public string NewPassword { get; set; }
+
+        [Required(ErrorMessage = "Password confirmation is required")]
+        [Compare("NewPassword", ErrorMessage = "Passwords do not match")]
+        public string ConfirmPassword { get; set; }
+    }
+}
