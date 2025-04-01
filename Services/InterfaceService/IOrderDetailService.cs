@@ -1,11 +1,12 @@
 using BusinessObject.Models;
 
-namespace DataAccess.InterfaceRepo;
-public interface IOrderDetailRepository
+namespace Services.InterfaceService;
+
+public interface IOrderDetailService
 {
-    Task<IEnumerable<OrderDetail>> GetOrderDetailsByOrderId(int orderId);
+    Task<IEnumerable<OrderDetail>> GetOrderDetails(int orderId);
     Task<OrderDetail> GetOrderDetail(int orderId, int productId);
-    Task AddOrderDetail(OrderDetail orderDetail);
+    Task CreateOrderDetail(OrderDetail orderDetail);
     Task UpdateOrderDetail(OrderDetail orderDetail);
     Task DeleteOrderDetail(int orderId, int productId);
 }

@@ -8,4 +8,6 @@ public interface IProductRepository
     void Update(Product product); 
     void Delete(int id);
     IEnumerable<Product> Search(string productName, decimal? unitPrice);
+    Task<IEnumerable<Product>> GetByIds(IEnumerable<int> ids);
+    Task<IEnumerable<Product>> GetAllProducts();
 }

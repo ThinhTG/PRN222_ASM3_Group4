@@ -80,4 +80,16 @@ public class ProductRepository : IProductRepository
 
         return query.ToList();
     }
+    
+    public async Task<IEnumerable<Product>> GetByIds(IEnumerable<int> ids)
+    {
+        return await _context.Products
+            .Where(p => ids.Contains(p.ProductId))
+            .ToListAsync();
+    }
+    
+    public async Task<IEnumerable<Product>> GetAllProducts()
+    {
+        return await _context.Products.ToListAsync();
+    }
 }

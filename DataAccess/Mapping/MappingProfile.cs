@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using BusinessObject.Models;
 
 namespace DataAccess.Mapping
 {
@@ -6,7 +7,8 @@ namespace DataAccess.Mapping
     {
         public MappingProfile()
         {
-   
-        }
+            CreateMap<Order, Order>().ForMember(dest => dest.OrderDetails, opt => opt.Ignore());
+            CreateMap<OrderDetail, OrderDetail>();
+        }   
     }
 }

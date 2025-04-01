@@ -1,0 +1,93 @@
+@page "/orders"
+@using BusinessObject.Models
+@using Services.InterfaceService
+@inject IOrderService OrderService
+@inject NavigationManager NavigationManager
+
+<h3>Order List</h3>
+
+@if (loading)
+{
+    <p><em>Loading...</em></p>
+}
+else if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger">@errorMessage</div>
+}
+else
+{
+    <div class="mb-3">
+        <a href="/orders/add" class="btn btn-primary">Create New Order</a>
+    </div>
+
+    @if (orders == null || !orders.Any())
+    {
+        <p>No orders found.</p>
+    }
+    else
+    {
+        <table class="table">
+            <thead>
+            <tr>
+                <th>Order ID</th>
+                <th>Member ID</th>
+                <th>Order Date</th>
+                <th>Required Date</th>
+                <th>Shipped Date</th>
+                <th>Freight</th>
+                <th>Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+            @foreach (var order in orders)
+            {
+                <tr>
+                    <td>@order.OrderId</td>
+                    <td>@order.MemberId</td>
+                    <td>@order.OrderDate.ToString("dd/MM/yyyy")</td>
+                    <td>@(order.RequiredDate.HasValue ? order.RequiredDate.Value.ToString("dd/MM/yyyy") : "N/A")</td>
+                    <td>@(order.ShippedDate.HasValue ? order.ShippedDate.Value.ToString("dd/MM/yyyy") : "N/A")</td>
+                    <td>@(order.Freight.HasValue ? order.Freight.Value.ToString("C") : "N/A")</td>
+                    <td>
+                        <a href="/orders/details/@order.OrderId" class="btn btn-info btn-sm">Details</a>
+                        <a href="/orders/edit/@order.OrderId" class="btn btn-warning btn-sm">Edit</a>
+                        <a href="/orders/delete/@order.OrderId" class="btn btn-danger btn-sm">Delete</a>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    }
+}
+
+@code {
+    private IEnumerable<Order> orders;
+    private bool loading = true;
+    private string errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadOrders();
+    }
+
+    private async Task LoadOrders()
+    {
+        try
+        {
+            orders = await OrderService.GetAllOrders();
+            if (orders == null || !orders.Any())
+            {
+                errorMessage = "No orders found in the system.";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error loading orders: {ex.Message}";
+        }
+        finally
+        {
+            loading = false;
+            StateHasChanged();
+        }
+    }
+}

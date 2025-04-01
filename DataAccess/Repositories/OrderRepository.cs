@@ -1,8 +1,83 @@
+using Microsoft.EntityFrameworkCore;
+using BusinessObject.Models;
+using DataAccess.DBContext;
 using DataAccess.InterfaceRepo;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
-namespace DataAccess.Repositories;
-
-public class OrderRepository : IOrderRepository
+namespace DataAccess.Repositories
 {
-    
+    public class OrderRepository : IOrderRepository
+    {
+        private readonly eStoreContext _context;
+
+        public OrderRepository(eStoreContext context)
+        {
+            _context = context;
+        }
+
+        public async Task<Order> GetOrderById(int orderId)
+        {
+            // Eager loading cả Member và OrderDetails, bao gồm Product trong OrderDetails
+            var order = await _context.Orders
+                .Include(o => o.Member)
+                .Include(o => o.OrderDetails)
+                    .ThenInclude(od => od.Product) // Thêm dòng này để tải Product
+                .FirstOrDefaultAsync(o => o.OrderId == orderId);
+
+            if (order == null)
+            {
+                Console.WriteLine($"Order with ID {orderId} not found in database.");
+            }
+            else if (order.OrderDetails == null || !order.OrderDetails.Any())
+            {
+                Console.WriteLine($"Order {orderId} loaded but has no OrderDetails.");
+            }
+            else
+            {
+                Console.WriteLine($"Order {orderId} loaded with {order.OrderDetails.Count} OrderDetails.");
+            }
+
+            return order;
+        }
+
+        // Các phương thức khác giữ nguyên
+        public async Task<IEnumerable<Order>> GetAllOrders()
+        {
+            return await _context.Orders
+                .Include(o => o.Member)
+                .ToListAsync();
+        }
+
+        public async Task AddOrder(Order order)
+        {
+            _context.Orders.Add(order);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task UpdateOrder(Order order)
+        {
+            _context.Orders.Update(order);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task DeleteOrder(int orderId)
+        {
+            var order = await GetOrderById(orderId);
+            if (order != null)
+            {
+                _context.Orders.Remove(order);
+                await _context.SaveChangesAsync();
+            }
+        }
+
+        public async Task<IEnumerable<Order>> GetOrdersByDateRange(DateTime startDate, DateTime endDate)
+        {
+            return await _context.Orders
+                .Where(o => o.OrderDate >= startDate && o.OrderDate <= endDate)
+                .ToListAsync();
+        }
+    }
 }

@@ -48,5 +48,16 @@ namespace Services.Service
         {
             return _productRepository.Search(productName, unitPrice);
         }
+        
+        public async Task<Dictionary<int, string>> GetProductsByIds(IEnumerable<int> ids)
+        {
+            var products = await _productRepository.GetByIds(ids);
+            return products.ToDictionary(p => p.ProductId, p => p.ProductName ?? "Unknown Product");
+        }
+        
+        public async Task<IEnumerable<Product>> GetAllProducts()
+        {
+            return await _productRepository.GetAllProducts();
+        }
     }
 }
