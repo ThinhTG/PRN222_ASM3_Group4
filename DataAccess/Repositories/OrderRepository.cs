@@ -48,8 +48,10 @@ namespace DataAccess.Repositories
         {
             return await _context.Orders
                 .Include(o => o.Member)
+                .Include(o => o.OrderDetails) // Load OrderDetails để tính TotalPrice
                 .ToListAsync();
         }
+
 
         public async Task AddOrder(Order order)
         {
@@ -76,8 +78,26 @@ namespace DataAccess.Repositories
         public async Task<IEnumerable<Order>> GetOrdersByDateRange(DateTime startDate, DateTime endDate)
         {
             return await _context.Orders
+                .Include(o => o.OrderDetails) // Load OrderDetails
                 .Where(o => o.OrderDate >= startDate && o.OrderDate <= endDate)
                 .ToListAsync();
         }
+
+
+        public async Task<decimal> GetTotalPriceByOrderId(int orderId)
+        {
+            var order = await _context.Orders
+                .Include(o => o.OrderDetails)
+                .FirstOrDefaultAsync(o => o.OrderId == orderId);
+
+            if (order == null)
+            {
+                return 0;
+            }
+
+            return order.TotalPrice;
+        }
+
+
     }
 }

@@ -1,0 +1,304 @@
+﻿@page "/report"
+@using BusinessObject.Models
+@using Services.InterfaceService
+@inject IOrderService OrderService
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
+@using ClosedXML.Excel;
+
+<h3>Report</h3>
+
+<div class="mb-3">
+    <label for="startDate">Start Date:</label>
+    <InputDate @bind-Value="startDate" id="startDate" class="form-control" @onchange="OnDateChanged" />
+</div>
+<div class="mb-3">
+    <label for="endDate">End Date:</label>
+    <InputDate @bind-Value="endDate" id="endDate" class="form-control" @onchange="OnDateChanged" />
+</div>
+<div class="mb-3">
+    <button class="btn btn-primary me-2" @onclick="GenerateReport">Generate Chart</button>
+    <button class="btn btn-secondary" @onclick="ExportToExcel">Export to Excel</button>
+</div>
+<canvas id="orderChart" width="400" height="200"></canvas>
+
+@if (loading)
+{
+    <p><em>Loading...</em></p>
+}
+else if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger">@errorMessage</div>
+}
+else
+{
+    if (orders == null || !orders.Any())
+    {
+        <p>No orders found.</p>
+    }
+    else
+    {
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Order ID</th>
+                    <th>Member ID</th>
+                    <th>Order Date</th>
+                    <th>Required Date</th>
+                    <th>Shipped Date</th>
+                    <th>Freight</th>
+                    <th>Total Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var order in orders)
+                {
+                    <tr>
+                        <td>@order.OrderId</td>
+                        <td>@order.MemberId</td>
+                        <td>@order.OrderDate.ToString("dd/MM/yyyy")</td>
+                        <td>@(order.RequiredDate.HasValue ? order.RequiredDate.Value.ToString("dd/MM/yyyy") : "N/A")</td>
+                        <td>@(order.ShippedDate.HasValue ? order.ShippedDate.Value.ToString("dd/MM/yyyy") : "N/A")</td>
+                        <td>@order.Freight</td>
+                        <td>@order.TotalPrice.ToString("C")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        <!-- Chart Container -->
+        <div>
+            <canvas id="orderChart" width="400" height="200"></canvas>
+        </div>
+    }
+}
+
+@code {
+    private IEnumerable<Order> orders;
+    private bool loading = false;
+    private string errorMessage;
+    private DateTime? startDate = DateTime.Today.AddMonths(-1);
+    private DateTime? endDate = DateTime.Today;
+    private bool chartRendered = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadOrders();
+    }
+
+    private async Task LoadOrders()
+    {
+        try
+        {
+            loading = true;
+            var allOrders = await OrderService.GetAllOrders();
+
+            if (allOrders != null && allOrders.Any())
+            {
+                orders = allOrders;
+                errorMessage = string.Empty;
+            }
+            else
+            {
+                errorMessage = "No orders found in the system.";
+                orders = Enumerable.Empty<Order>();
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error loading orders: {ex.Message}";
+        }
+        finally
+        {
+            loading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task OnDateChanged()
+    {
+        // Trigger report generation on date change
+        await GenerateReport();
+    }
+
+    private async Task GenerateReport()
+    {
+        try
+        {
+            loading = true;
+
+            // Get the orders again from the service
+            var allOrders = await OrderService.GetAllOrders();
+
+            // Apply date filters
+            orders = allOrders
+                .Where(o => (!startDate.HasValue || o.OrderDate.Date >= startDate.Value.Date) &&
+                            (!endDate.HasValue || o.OrderDate.Date <= endDate.Value.Date))
+                .OrderByDescending(o => o.OrderDate) // Order by date or another relevant column
+                .ToList();
+
+            // Check if any orders are found after filtering
+            errorMessage = (orders == null || !orders.Any())
+                           ? "No orders found for the selected period."
+                           : string.Empty;
+
+            // Generate the chart for the updated orders
+            await GenerateChart();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error generating report: {ex.Message}";
+        }
+        finally
+        {
+            loading = false;
+            StateHasChanged();  // Ensure the UI is updated
+        }
+    }
+
+    private async Task ExportToExcel()
+    {
+        try
+        {
+            if (orders == null || !orders.Any())
+            {
+                errorMessage = "No data to export.";
+                return;
+            }
+
+            using (var workbook = new XLWorkbook())
+            {
+                var ws = workbook.Worksheets.Add("Report");
+
+                // Add header row
+                ws.Cell(1, 1).Value = "Order ID";
+                ws.Cell(1, 2).Value = "Member ID";
+                ws.Cell(1, 3).Value = "Order Date";
+                ws.Cell(1, 4).Value = "Required Date";
+                ws.Cell(1, 5).Value = "Shipped Date";
+                ws.Cell(1, 6).Value = "Freight";
+
+                int row = 2;
+                foreach (var order in orders)
+                {
+                    ws.Cell(row, 1).Value = order.OrderId;
+                    ws.Cell(row, 2).Value = order.MemberId;
+                    ws.Cell(row, 3).Value = order.OrderDate.ToString("dd/MM/yyyy");
+                    ws.Cell(row, 4).Value = order.RequiredDate?.ToString("dd/MM/yyyy") ?? "N/A";
+                    ws.Cell(row, 5).Value = order.ShippedDate?.ToString("dd/MM/yyyy") ?? "N/A";
+                    ws.Cell(row, 6).Value = order.Freight?.ToString("C") ?? "N/A";
+                    row++;
+                }
+
+                using (var stream = new MemoryStream())
+                {
+                    workbook.SaveAs(stream);
+                    stream.Position = 0;
+                    var excelData = Convert.ToBase64String(stream.ToArray());
+
+                    // Trigger the download using JavaScript
+                    await JSRuntime.InvokeVoidAsync("saveAsFile", "Report.xlsx", excelData);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error exporting to Excel: {ex.Message}";
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !chartRendered)
+        {
+            await GenerateChart();
+            chartRendered = true;  // Prevent rendering the chart multiple times
+        }
+    }
+
+    private async Task GenerateChart()
+    {
+        try
+        {
+            // Ensure that the orders list is populated
+            if (orders == null || !orders.Any())
+            {
+                errorMessage = "No data available for chart generation.";
+                return;
+            }
+
+            // Prepare data for the chart (total amount per order date)
+            var chartData = orders
+                .GroupBy(o => o.OrderDate.Date)
+                .Select(g => new
+                {
+                    Date = g.Key,
+                    TotalAmount = g.Sum(o => o.TotalPrice)
+                })
+                .OrderBy(d => d.Date)
+                .ToList();
+
+            // Check if there is data for chart
+            if (chartData.Count == 0)
+            {
+                errorMessage = "No data available for the selected date range.";
+                return;
+            }
+
+            // Prepare chart labels and data
+            var labels = chartData.Select(d => d.Date.ToString("dd/MM/yyyy")).ToArray();
+            var data = chartData.Select(d => (double)d.TotalAmount).ToArray();
+
+            // Prepare chart options
+            var chartOptions = new
+            {
+                type = "line",
+                data = new
+                {
+                    labels,
+                    datasets = new[] {
+                    new
+                    {
+                        label = "Total Amount",
+                        data,
+                        borderColor = "rgba(75, 192, 192, 1)",
+                        fill = false
+                    }
+                }
+                },
+                options = new
+                {
+                    responsive = true,
+                    scales = new
+                    {
+                        yAxes = new[] {
+                        new
+                        {
+                            ticks = new
+                            {
+                                beginAtZero = true
+                            }
+                        }
+                    }
+                    }
+                }
+            };
+
+            // Destroy existing chart if it exists
+            await JSRuntime.InvokeVoidAsync("eval", @"
+            var chartInstance = Chart.getChart('orderChart');
+            if (chartInstance) {
+                chartInstance.destroy();
+            }
+        ");
+
+            // Create a new chart
+            await JSRuntime.InvokeVoidAsync("eval", $"new Chart(document.getElementById('orderChart').getContext('2d'), {System.Text.Json.JsonSerializer.Serialize(chartOptions)});");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error generating chart: {ex.Message}";
+        }
+    }
+
+}
