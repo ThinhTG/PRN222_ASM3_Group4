@@ -1,6 +1,7 @@
 ﻿@page "/products"
 @using BusinessObject.Models
 @using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Components.Routing
 @inject Services.InterfaceService.IProductService ProductService
 @inject NavigationManager Navigation
 @inject AuthenticationStateProvider AuthenticationStateProvider
@@ -105,6 +106,7 @@
 		</div>
 	</div>
 </CascadingAuthenticationState>
+
 <style>
 	/* Global Styles */
 	body {
@@ -239,7 +241,7 @@
 </style>
 
 @code {
-	private List<Product> products = new();
+	private IEnumerable<Product> products = Enumerable.Empty<Product>();
 	private string searchName = string.Empty;
 	private decimal? searchPrice = null;
 	private string errorMessage;
@@ -251,7 +253,7 @@
 			var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
 			var user = authState.User;
 			isAdmin = user.IsInRole("Admin");
-			products = ProductService.GetAll().ToList();
+			products = await ProductService.GetAll();
 			if (!products.Any())
 			{
 				errorMessage = "No products found. Please add a new product.";
@@ -263,24 +265,24 @@
 		}
 	}
 
-	private void SearchProducts()
-	{
-		try
-		{
 
-			products = ProductService.Search(searchName, searchPrice).ToList();
-			if (!products.Any())
-			{
-				errorMessage = "No products match your search criteria.";
-			}
-			else
-			{
-				errorMessage = null;
-			}
-		}
-		catch (Exception ex)
-		{
-			errorMessage = $"Error searching products: {ex.Message}";
-		}
-	}
+    private async Task SearchProducts()
+    {
+        try
+        {
+            products = await ProductService.Search(searchName, searchPrice);
+            if (!products.Any())
+            {
+                errorMessage = "No products match your search criteria.";
+            }
+            else
+            {
+                errorMessage = null;
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error searching products: {ex.Message}";
+        }
+    }
 }

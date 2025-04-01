@@ -1,15 +1,38 @@
+
 ﻿@using Services.Service
 @using Microsoft.AspNetCore.Components.Authorization
 @inherits LayoutComponentBase
 @inject AuthenticationStateProvider AuthStateProvider
 @inject NavigationManager Navigation
 
+
 <div class="page">
     <div class="sidebar">
-        <NavMenu />
+    <AdminNavMenu />
     </div>
+    @* @if (IsAuthenticated) *@
+    @* { *@
+    @*     <div class="sidebar"> *@
+    @*         @switch (UserRole) *@
+    @*         { *@
+    @*             case "Admin": *@
+    @*                 <AdminNavMenu /> *@
+    @*                 break; *@
+    @*             case "Customer": *@
+    @*                 <CustomerNavMenu /> *@
+    @*                 break; *@
+    @*             case "Staff": *@
+    @*                 <StaffNavMenu /> *@
+    @*                 break; *@
+    @*             default: *@
+    @*                 <GuestNavMenu /> *@
+    @*                 break; *@
+    @*         } *@
+    @*     </div> *@
+    @* } *@
 
     <main>
+
         <AuthorizeView>
             <Authorized>
                 <button class="auth-button logout-button" @onclick="HandleLogout">Logout</button>
@@ -19,6 +42,7 @@
                 <a href="/register" class="auth-button register-button">Register</a>
             </NotAuthorized>
         </AuthorizeView>
+
 
         <article class="content px-4">
             @Body
@@ -54,7 +78,6 @@
 }
 
 <style>
-    /* Tổng thể trang */
     .page {
         display: flex;
         flex-direction: row;
@@ -62,6 +85,7 @@
         background: linear-gradient(135deg, #f0f4ff, #e2e8f0); /* Gradient nền nhẹ */
         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Font hiện đại */
     }
+
 
     /* Sidebar */
     .sidebar {
@@ -71,6 +95,7 @@
         box-shadow: 4px 0 15px rgba(0, 0, 0, 0.2); /* Thêm bóng đổ */
         transition: width 0.3s ease; /* Hiệu ứng khi thay đổi kích thước */
     }
+
 
     /* Main content */
     main {
@@ -83,6 +108,7 @@
     }
 
     /* Nút chung */
+
     .auth-button {
         padding: 10px 20px; /* Tăng padding cho nút lớn hơn */
         border-radius: 25px; /* Bo góc tròn hơn */
@@ -99,11 +125,14 @@
         margin: 0 10px 10px 0; /* Khoảng cách giữa các nút */
     }
 
+
     /* Nút Login */
     .login-button {
         background: linear-gradient(45deg, #ff6b6b, #ff8e53); /* Gradient đẹp hơn */
+
         color: #ffffff;
     }
+
 
     .login-button:hover {
         background: linear-gradient(45deg, #ff8e53, #ff6b6b); /* Đảo gradient khi hover */
@@ -137,13 +166,13 @@
         box-shadow: 0 6px 15px rgba(229, 62, 62, 0.4); /* Bóng đổ nổi bật */
     }
 
-    /* Nội dung chính */
     .content {
         padding: 1.5rem; /* Tăng padding cho thoáng */
         background: #f9fafb; /* Nền xám nhạt */
         border-radius: 8px; /* Bo góc nhẹ */
         min-height: calc(100vh - 100px); /* Đảm bảo chiều cao đủ */
     }
+
 
     /* Thông báo lỗi */
     #blazor-error-ui {
@@ -161,6 +190,7 @@
         z-index: 1000; /* Đảm bảo luôn ở trên cùng */
     }
 
+
     #blazor-error-ui .reload,
     #blazor-error-ui .dismiss {
         color: #dc2626;
@@ -175,6 +205,4 @@
         color: #b91c1c; /* Đậm hơn khi hover */
         text-decoration: underline;
     }
-    
-    
 </style>

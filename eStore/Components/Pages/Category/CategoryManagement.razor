@@ -7,19 +7,17 @@
 @rendermode InteractiveServer
 
 <CascadingAuthenticationState>
-    <h3>Categories</h3>
 
-    @if (isAdmin)
-    {
         <div class="container mt-4">
             <h3 class="mb-4 text-primary">Category Management</h3>
 
             <div class="card shadow-sm p-3 mb-4">
                 <div class="d-flex justify-content-between align-items-center">
+                    @if (isAdmin) {
                     <NavLink class="btn btn-primary" href="/categories/add">
                         <i class="bi bi-plus-circle me-2"></i>Add New Category
                     </NavLink>
-
+                    }
                     <div class="d-flex gap-3">
                         <div class="input-group w-auto">
                             <span class="input-group-text"><i class="bi bi-search"></i></span>
@@ -33,7 +31,7 @@
                 </div>
             </div>
         </div>
-    }
+    
 
     @if (!string.IsNullOrEmpty(errorMessage))
     {
@@ -91,8 +89,131 @@
     </div>
 </CascadingAuthenticationState>
 
+<style>
+    /* Title Styling */
+    h3.text-primary {
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        color: #007bff;
+        text-align: center;
+        background: linear-gradient(90deg, #007bff, #00c6ff);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-size: 2rem;
+        padding-bottom: 10px;
+        border-bottom: 3px solid #007bff;
+        display: inline-block;
+        box-shadow: 0px 2px 5px rgba(0, 123, 255, 0.2);
+    }
+
+
+    /* Card Styling */
+    .card {
+        border-radius: 12px;
+        border: none;
+        box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
+        background: #ffffff;
+    }
+
+        .card .btn {
+            border-radius: 8px;
+            transition: all 0.3s ease-in-out;
+        }
+
+    /* Search and Filter Section */
+    .input-group-text {
+        background-color: #007bff;
+        color: white;
+        border-radius: 8px 0 0 8px;
+    }
+
+    .input-group .form-control {
+        border-radius: 0 8px 8px 0;
+        transition: 0.3s;
+    }
+
+        .input-group .form-control:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+        }
+
+    .btn-outline-secondary:hover {
+        background-color: #007bff;
+        color: white;
+        border-color: #007bff;
+    }
+
+    /* Table Styling */
+    .table {
+        border-radius: 12px;
+        overflow: hidden;
+        background: #ffffff;
+    }
+
+        .table thead {
+            background-color: #007bff;
+            color: white;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .table tbody tr:hover {
+            background-color: #f0f8ff;
+            transition: 0.3s;
+        }
+
+        .table tbody tr td {
+            vertical-align: middle;
+        }
+
+    /* Image Styling */
+    .img-thumbnail {
+        border-radius: 8px;
+        transition: 0.3s;
+    }
+
+        .img-thumbnail:hover {
+            transform: scale(1.1);
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+    /* Button Group Styling */
+    .btn-group .btn {
+        padding: 6px 12px;
+        transition: 0.3s;
+        border-radius: 6px;
+    }
+
+    .btn-outline-warning {
+        border-color: #ffc107;
+        color: #ffc107;
+    }
+
+        .btn-outline-warning:hover {
+            background-color: #ffc107;
+            color: white;
+        }
+
+    .btn-outline-danger {
+        border-color: #dc3545;
+        color: #dc3545;
+    }
+
+        .btn-outline-danger:hover {
+            background-color: #dc3545;
+            color: white;
+        }
+
+    /* Hover Effect for Buttons */
+    .btn-group .btn:hover {
+        transform: scale(1.05);
+    }
+
+</style>
+
 @code {
-    private List<Category> categories = new();
+    private IEnumerable<Category> categories = Enumerable.Empty<Category>();
     private string searchName = string.Empty;
     private string errorMessage;
     private bool isAdmin = false;
@@ -105,7 +226,7 @@
             var user = authState.User;
             isAdmin = user.IsInRole("Admin");
 
-            categories = CategoryService.GetAll().ToList();
+            categories = await CategoryService.GetAll();
             if (!categories.Any())
             {
                 errorMessage = "No categories found. Please add a new category.";
@@ -117,11 +238,11 @@
         }
     }
 
-    private void SearchCategories()
+    private async Task SearchCategories()
     {
         try
         {
-            categories = CategoryService.Search(searchName).ToList();
+            categories = await CategoryService.Search(searchName);
             if (!categories.Any())
             {
                 errorMessage = "No categories match your search criteria.";
