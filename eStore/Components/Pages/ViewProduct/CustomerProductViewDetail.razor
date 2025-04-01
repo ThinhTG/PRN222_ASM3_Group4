@@ -1,4 +1,4 @@
-﻿@page "/products/details/{Id:int}"
+﻿@page "/shop/details/{productId:int}"
 @using BusinessObject.Models
 @inject Services.InterfaceService.IProductService ProductService
 @inject NavigationManager Navigation
@@ -47,8 +47,6 @@
                     <h4 class="fw-bold text-dark mb-3">@product.ProductName</h4>
                     <hr class="my-4" style="border-color: #dee2e6;" />
                     <dl class="row mb-4">
-                        <dt class="col-sm-3 text-muted">ID</dt>
-                        <dd class="col-sm-9 text-dark">@product.ProductId</dd>
                         <dt class="col-sm-3 text-muted">Category</dt>
                         <dd class="col-sm-9 text-dark">@(product.Category?.CategoryName ?? "N/A")</dd>
                         <dt class="col-sm-3 text-muted">Price</dt>
@@ -66,11 +64,11 @@
                         </dd>
                     </dl>
                     <div class="d-flex gap-2">
-                        <NavLink class="btn btn-primary btn-lg px-4 shadow-sm" href="@($"/products/edit/{product.ProductId}")">
-                            <i class="bi bi-pencil me-2"></i>Edit
-                        </NavLink>
-                        <NavLink class="btn btn-outline-secondary btn-lg px-4 shadow-sm" href="/products">
-                            <i class="bi bi-arrow-left me-2"></i>Back to List
+                        <button class="btn btn-success btn-lg px-4 shadow-sm" @onclick="AddToCart">
+                            <i class="bi bi-cart-plus me-2"></i>Add to Cart
+                        </button>
+                        <NavLink class="btn btn-outline-secondary btn-lg px-4 shadow-sm" href="/shop">
+                            <i class="bi bi-arrow-left me-2"></i>Back to Shop
                         </NavLink>
                     </div>
                 </div>
@@ -127,67 +125,27 @@
         transition: all 0.3s ease;
     }
 
-    .btn-primary {
-        background: linear-gradient(90deg, #007bff, #0056b3);
-        border: none;
-        color: white;
+    .btn-success:hover {
+        transform: scale(1.05);
     }
-
-        .btn-primary:hover {
-            background: linear-gradient(90deg, #0056b3, #003580);
-            transform: scale(1.05);
-        }
-
-    .btn-outline-secondary {
-        border-color: #6c757d;
-        color: #6c757d;
-    }
-
-        .btn-outline-secondary:hover {
-            background-color: #6c757d;
-            color: white;
-        }
 
     .badge {
         font-size: 1rem;
         padding: 8px 12px;
         border-radius: 6px;
     }
-
-    .spinner-border {
-        width: 2.5rem;
-        height: 2.5rem;
-    }
-
-    .text-muted {
-        font-size: 1rem;
-        font-weight: 500;
-    }
-
-    dl dt {
-        font-weight: 600;
-        font-size: 1.1rem;
-    }
-
-    dl dd {
-        font-weight: 700;
-        font-size: 1.2rem;
-    }
-
 </style>
 
 @code {
-    [Parameter]
-    public int Id { get; set; }
-
+    [Parameter] public int productId { get; set; }
     private Product product;
     private string errorMessage;
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnParametersSetAsync()
     {
         try
         {
-            product = await ProductService.GetById(Id);
+            product = await ProductService.GetById(productId);
             if (product == null)
             {
                 errorMessage = "Product not found.";
@@ -197,5 +155,11 @@
         {
             errorMessage = $"Error loading product: {ex.Message}";
         }
+    }
+
+
+    private void AddToCart()
+    {
+        // Logic thêm vào giỏ hàng
     }
 }

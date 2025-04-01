@@ -15,53 +15,53 @@ public class ProductRepository : IProductRepository
         _context = context;
     }
 
-    public IEnumerable<Product> GetAll()
+    public async Task<IEnumerable<Product>> GetAll()
     {
-        return _context.Products
+        return await _context.Products
             .Include(p => p.Category)
-            .ToList();
+            .ToListAsync();
     }
 
-    public Product GetById(int id)
+    public async Task<Product> GetById(int id)
     {
-        return _context.Products
+        return await _context.Products
             .Include(p => p.Category)
-            .FirstOrDefault(p => p.ProductId == id);
+            .FirstOrDefaultAsync(p => p.ProductId == id);
     }
 
-    public void Add(Product product)
+    public async Task Add(Product product)
     {
         if (product == null)
             throw new ArgumentNullException(nameof(product));
 
-        _context.Products.Add(product);
-        _context.SaveChanges();
+        await _context.Products.AddAsync(product);
+        await _context.SaveChangesAsync();
     }
 
-    public void Update(Product product)
+    public async Task Update(Product product)
     {
         if (product == null)
             throw new ArgumentNullException(nameof(product));
 
-        var existingProduct = _context.Products.Find(product.ProductId);
+        var existingProduct = await _context.Products.FindAsync(product.ProductId);
         if (existingProduct == null)
             throw new ArgumentException("Product not found");
 
         _context.Products.Update(product);
-        _context.SaveChanges();
+        await _context.SaveChangesAsync();
     }
 
-    public void Delete(int id)
+    public async Task Delete(int id)
     {
-        var product = _context.Products.Find(id);
+        var product = await _context.Products.FindAsync(id);
         if (product == null)
             throw new ArgumentException("Product not found");
 
         _context.Products.Remove(product);
-        _context.SaveChanges();
+        await _context.SaveChangesAsync();
     }
 
-    public IEnumerable<Product> Search(string productName, decimal? unitPrice)
+    public async Task<IEnumerable<Product>> Search(string productName, decimal? unitPrice)
     {
         var query = _context.Products
             .Include(p => p.Category)
@@ -78,7 +78,7 @@ public class ProductRepository : IProductRepository
             query = query.Where(p => p.UnitPrice <= unitPrice.Value);
         }
 
-        return query.ToList();
+        return await query.ToListAsync();
     }
     
     public async Task<IEnumerable<Product>> GetByIds(IEnumerable<int> ids)

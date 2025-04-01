@@ -2,7 +2,7 @@
 using eStore.DI;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Server;
-using Microsoft.EntityFrameworkCore;
+using Services.HubSignalR;
 using Services.Service;
 
 namespace eStore
@@ -12,7 +12,6 @@ namespace eStore
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
-
             builder.Services.AddRazorComponents()
                 .AddInteractiveServerComponents();
             builder.Services.AddScoped<AuthenticationStateProvider, CustomAuthStateProvider>();
@@ -43,7 +42,6 @@ namespace eStore
             app.UseHttpsRedirection();
             app.UseStaticFiles();
             app.UseAntiforgery();
-
             app.MapRazorComponents<App>()
                 .AddInteractiveServerRenderMode();
 

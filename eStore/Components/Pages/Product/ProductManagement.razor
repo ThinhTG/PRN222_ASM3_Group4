@@ -1,8 +1,8 @@
 ﻿@page "/products"
 @using BusinessObject.Models
+@using Microsoft.AspNetCore.Components.Routing
 @inject Services.InterfaceService.IProductService ProductService
 @inject NavigationManager Navigation
-@rendermode InteractiveServer
 
 <div class="container mt-4">
     <h3 class="mb-4 text-primary">Product Management</h3>
@@ -96,7 +96,6 @@
         </div>
     </div>
 </div>
-
 <style>
     /* Global Styles */
     body {
@@ -231,7 +230,7 @@
 </style>
 
 @code {
-    private List<Product> products = new();
+    private IEnumerable<Product> products = Enumerable.Empty<Product>();
     private string searchName = string.Empty;
     private decimal? searchPrice = null;
     private string errorMessage;
@@ -240,7 +239,7 @@
     {
         try
         {
-            products = ProductService.GetAll().ToList();
+            products = await ProductService.GetAll();
             if (!products.Any())
             {
                 errorMessage = "No products found. Please add a new product.";
@@ -252,11 +251,12 @@
         }
     }
 
-    private void SearchProducts()
+
+    private async Task SearchProducts()
     {
         try
         {
-            products = ProductService.Search(searchName, searchPrice).ToList();
+            products = await ProductService.Search(searchName, searchPrice);
             if (!products.Any())
             {
                 errorMessage = "No products match your search criteria.";

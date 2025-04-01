@@ -5,7 +5,7 @@
 @rendermode InteractiveServer
 
 <div class="container mt-5">
-    <h3 class="mb-4 text-primary fw-bold">Category Details</h3>
+    <h3 class="mb-4 text-primary">Category Details</h3>
 
     @if (category == null)
     {
@@ -57,36 +57,98 @@
 </div>
 
 <style>
+    h3.text-primary {
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        color: #007bff;
+        text-align: center;
+        background: linear-gradient(90deg, #007bff, #00c6ff);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-size: 2rem;
+        padding-bottom: 10px;
+        border-bottom: 3px solid #007bff;
+        display: inline-block;
+        box-shadow: 0px 2px 5px rgba(0, 123, 255, 0.2);
+    }
+
     .card {
-        background-color: #fff;
-        transition: transform 0.2s ease, box-shadow 0.3s ease;
+        background: #ffffff;
+        border-radius: 12px;
+        padding: 25px;
+        box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
     }
 
         .card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1) !important;
+            box-shadow: 0px 10px 25px rgba(0, 0, 0, 0.15);
+        }
+
+    .image-container img {
+        border-radius: 12px;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.1);
+    }
+
+        .image-container img:hover {
+            transform: scale(1.05);
+            box-shadow: 0px 10px 25px rgba(0, 0, 0, 0.2);
+        }
+
+    .btn {
+        padding: 12px 18px;
+        border-radius: 8px;
+        font-weight: 700;
+        transition: all 0.3s ease;
+    }
+
+    .btn-primary {
+        background: linear-gradient(90deg, #007bff, #0056b3);
+        border: none;
+        color: white;
+    }
+
+        .btn-primary:hover {
+            background: linear-gradient(90deg, #0056b3, #003580);
+            transform: scale(1.05);
+        }
+
+    .btn-outline-secondary {
+        border-color: #6c757d;
+        color: #6c757d;
+    }
+
+        .btn-outline-secondary:hover {
+            background-color: #6c757d;
+            color: white;
         }
 
     .badge {
-        font-size: 0.9rem;
-        padding: 0.5em 1em;
+        font-size: 1rem;
+        padding: 8px 12px;
+        border-radius: 6px;
     }
 
-    .btn-lg {
-        font-size: 1.1rem;
-        border-radius: 8px;
-    }
-
-    .text-primary {
-        color: #0d6efd !important;
-    }
-
-    .text-dark {
-        color: #343a40 !important;
+    .spinner-border {
+        width: 2.5rem;
+        height: 2.5rem;
     }
 
     .text-muted {
-        color: #6c757d !important;
+        font-size: 1rem;
+        font-weight: 500;
+    }
+
+    dl dt {
+        font-weight: 600;
+        font-size: 1.1rem;
+    }
+
+    dl dd {
+        font-weight: 700;
+        font-size: 1.2rem;
     }
 </style>
 
@@ -101,7 +163,7 @@
     {
         try
         {
-            category = CategoryService.GetById(Id);
+            category = await CategoryService.GetById(Id);
             if (category == null)
             {
                 errorMessage = "Category not found.";

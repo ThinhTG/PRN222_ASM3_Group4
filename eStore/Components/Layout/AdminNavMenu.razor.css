@@ -1,0 +1,80 @@
+/* Navbar Header */
+.top-row {
+    background: linear-gradient(135deg, #0d47a1, #1e88e5);
+    width: 100%;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+}
+
+.navbar-brand {
+    font-size: 2rem;
+    font-weight: bold;
+    color: white !important;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    text-align: center;
+    flex-grow: 1;
+}
+
+.navbar-toggler {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: white;
+    cursor: pointer;
+    padding: 5px 10px;
+}
+
+/* Sidebar */
+.nav-scrollable {
+    width: 100%;
+    height: 100vh;
+    top: 0;
+    left: 0;
+    background: linear-gradient(135deg, #0d47a1, #1e88e5);
+    padding-top: 80px;
+    overflow-y: auto;
+    transition: width 0.3s ease-in-out;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Nav items container */
+.nav-item {
+    width: 100%;
+    text-align: center;
+}
+
+/* Nav links */
+.nav-link {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    width: 100%;
+    padding: 15px 20px;
+    color: white !important;
+    font-size: 1.2rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.3s ease-in-out;
+    border-radius: 5px;
+    margin: 20px 0;
+}
+
+    .nav-link i {
+        margin-right: 12px;
+        font-size: 1.3rem;
+    }
+
+    .nav-link:hover {
+        background: rgba(255, 255, 255, 0.2);
+        transform: translateX(10px);
+    }
+
+.nav-item {
+    padding: 0;
+}

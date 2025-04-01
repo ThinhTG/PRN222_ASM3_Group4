@@ -115,9 +115,9 @@
                     </div>
                 </div>
                 <div class="d-flex gap-2">
-                     <button class="btn btn-primary" type="submit" disabled="@(!IsAdmin)">
-                         <i class="bi bi-plus-circle me-2"></i>Add Product
-                     </button>
+                    <button class="btn btn-primary" type="submit" disabled="@(!IsAdmin)">
+                        <i class="bi bi-plus-circle me-2"></i>Add Product
+                    </button>
                     <NavLink class="btn btn-outline-secondary" href="/products">
                         <i class="bi bi-x-circle me-2"></i>Cancel
                     </NavLink>
@@ -126,9 +126,7 @@
         </div>
     }
 </div>
-
 <style>
-    /* Title Styling */
     h3.text-primary {
         font-weight: 800;
         text-transform: uppercase;
@@ -145,55 +143,35 @@
         box-shadow: 0px 2px 5px rgba(0, 123, 255, 0.2);
     }
 
-    /* Card Styling */
     .card {
-        border-radius: 15px;
-        border: none;
-        box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.15);
-        background: #ffffff;
+        background: #fff;
+        border-radius: 10px;
         padding: 20px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     }
 
-        .card .btn {
-            border-radius: 10px;
-            transition: all 0.3s ease-in-out;
-        }
-
-    /* Form Elements */
-    .form-control {
-        border-radius: 10px;
-        transition: 0.3s;
+    .form-label {
+        font-weight: 600;
     }
 
-        .form-control:focus {
-            border-color: #007bff;
-            box-shadow: 0 0 8px rgba(0, 123, 255, 0.5);
-        }
-
-    .input-group-text {
-        background-color: #007bff;
-        color: white;
-        border-radius: 10px 0 0 10px;
+    .form-control, .form-select {
+        border-radius: 8px;
+        padding: 10px;
     }
 
-    /* Buttons */
     .btn {
-        transition: all 0.3s ease-in-out;
-        border-radius: 10px;
+        padding: 10px 16px;
+        border-radius: 8px;
+        font-weight: 600;
     }
-
-        .btn:hover {
-            transform: scale(1.05);
-        }
 
     .btn-primary {
         background-color: #007bff;
-        border-color: #007bff;
+        border: none;
     }
 
         .btn-primary:hover {
             background-color: #0056b3;
-            border-color: #0056b3;
         }
 
     .btn-outline-secondary {
@@ -206,35 +184,20 @@
             color: white;
         }
 
-    /* Image Upload */
     .img-thumbnail {
         border-radius: 10px;
-        transition: 0.3s;
-        border: 2px solid #007bff;
+        margin-top: 10px;
     }
 
-        .img-thumbnail:hover {
-            transform: scale(1.1);
-            box-shadow: 0px 5px 10px rgba(0, 0, 0, 0.2);
-        }
-
-    /* Alerts */
-    .alert {
-        border-radius: 10px;
-    }
-
-    /* Loading Spinner */
     .spinner-border {
-        width: 3rem;
-        height: 3rem;
-        border-width: 4px;
+        width: 2rem;
+        height: 2rem;
     }
 
 </style>
-
 @code {
     private Product newProduct = new() { ImageUrl = "", CategoryId = 0 };
-    private List<Category> categories = new();
+    private IEnumerable<Category> categories = Enumerable.Empty<Category>();
     private string? errorMessage, successMessage;
     private bool isUploading;
     private bool isLoading = true;
@@ -246,7 +209,7 @@
     {
         try
         {
-            categories = CategoryService.GetAll().ToList();
+            categories = await CategoryService.GetAll();
             if (!categories.Any())
             {
                 errorMessage = "No categories available. Please add a category first.";
@@ -339,12 +302,8 @@
 
         try
         {
-            if (IsAdmin)
-            {
-                ProductService.Add(newProduct);
-                Navigation.NavigateTo("/products");
-            }
-          
+            await ProductService.Add(newProduct);
+            Navigation.NavigateTo("/products");
         }
         catch (Exception ex)
         {

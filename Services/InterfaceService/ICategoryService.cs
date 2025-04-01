@@ -4,11 +4,11 @@ namespace Services.InterfaceService
 {
     public interface ICategoryService
     {
-        IEnumerable<Category> GetAll();
-        Category GetById(int id);
-        void Add(Category category);
-        void Update(Category category);
-        void Delete(int id);
-        IEnumerable<Category> Search(string categoryName);
+        Task<IEnumerable<Category>> GetAll();
+        Task<Category> GetById(int id);
+        Task Add(Category category);
+        Task Update(Category category);
+        Task Delete(int id);
+        Task<IEnumerable<Category>> Search(string categoryName);
     }
 }
