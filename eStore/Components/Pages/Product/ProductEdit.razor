@@ -255,34 +255,40 @@
     private string successMessage;
     private bool isLoading = true;
     private bool isUploading;
+    private HubConnection? hubConnection;
 
     protected override async Task OnInitializedAsync()
     {
         try
         {
-            // Fetch the product
-            product = await ProductService.GetById(Id);
-            if (product == null)
-            {
-                errorMessage = "Product not found.";
-                return;
-            }
+            hubConnection = new HubConnectionBuilder()
+                .WithUrl(Navigation.ToAbsoluteUri("/hub")) // Chuẩn hóa đường dẫn
+                .WithAutomaticReconnect()
+                .Build();
 
-            // Fetch the categories
-            categories = await CategoryService.GetAll();
-            if (!categories.Any())
+            hubConnection.On<int>("Updated", async (updatedProductId) =>
             {
-                errorMessage = "No categories available. Please add a category first.";
-            }
+                if (product?.ProductId == updatedProductId)
+                {
+                    await InvokeAsync(async () =>
+                    {
+                        successMessage = "Product updated elsewhere. Refreshing...";
+                        await LoadProductData();
+                        StateHasChanged();
+                    });
+                }
+            });
+
+            await hubConnection.StartAsync();
+            await LoadProductData();
         }
         catch (Exception ex)
         {
-            errorMessage = $"Error loading data: {ex.Message}";
+            errorMessage = $"Initialization error: {ex.Message}";
         }
         finally
         {
             isLoading = false;
-            StateHasChanged();
         }
     }
 
@@ -337,34 +343,73 @@
         }
     }
 
+    // private async Task UpdateProduct()
+    // {
+    //     if (string.IsNullOrEmpty(product.ProductName) || string.IsNullOrEmpty(product.Weight))
+    //     {
+    //         errorMessage = "Product Name and Weight are required.";
+    //         return;
+    //     }
+
+    //     if (product.CategoryId == 0)
+    //     {
+    //         errorMessage = "Please select a category.";
+    //         return;
+    //     }
+
+    //     try
+    //     {
+    //         isLoading = true;
+    //         await ProductService.Update(product);
+    //         Navigation.NavigateTo("/products");
+    //     }
+    //     catch (Exception ex)
+    //     {
+    //         errorMessage = $"Error updating product: {ex.Message}";
+    //     }
+    //     finally
+    //     {
+    //         isLoading = false;
+    //         StateHasChanged();
+    //     }
+    // }
+
+    private async Task LoadProductData()
+    {
+        product = await ProductService.GetById(Id);
+        categories = await CategoryService.GetAll();
+    }
+
     private async Task UpdateProduct()
     {
-        if (string.IsNullOrEmpty(product.ProductName) || string.IsNullOrEmpty(product.Weight))
-        {
-            errorMessage = "Product Name and Weight are required.";
-            return;
-        }
-
-        if (product.CategoryId == 0)
-        {
-            errorMessage = "Please select a category.";
-            return;
-        }
-
         try
         {
             isLoading = true;
+            StateHasChanged(); // Hiển thị loading
+
             await ProductService.Update(product);
+            await hubConnection.SendAsync("SendMessage");
+
+            successMessage = "Product updated successfully!";
+            await Task.Delay(1000); // Hiển thị thông báo thành công
             Navigation.NavigateTo("/products");
         }
         catch (Exception ex)
         {
-            errorMessage = $"Error updating product: {ex.Message}";
+            errorMessage = $"Update failed: {ex.Message}";
         }
         finally
         {
             isLoading = false;
             StateHasChanged();
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (hubConnection is not null)
+        {
+            await hubConnection.DisposeAsync();
         }
     }
 }

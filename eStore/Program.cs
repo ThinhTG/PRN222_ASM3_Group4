@@ -79,6 +79,7 @@ namespace eStore
             app.UseHttpsRedirection();
             app.UseStaticFiles();
             app.UseAntiforgery();
+            app.MapHub<Hubs>("/hub");
 
             app.MapRazorComponents<App>().AddInteractiveServerRenderMode();
 

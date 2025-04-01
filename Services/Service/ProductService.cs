@@ -9,6 +9,7 @@ namespace Services.Service
     public class ProductService : IProductService
     {
         private readonly IProductRepository _productRepository;
+        //private readonly IHubContext<Hubs> _hubContext;
         private readonly IHubContext<Hubs> _hubContext;
 
         public ProductService(IProductRepository productRepository, IHubContext<Hubs> hubContext)
@@ -34,7 +35,9 @@ namespace Services.Service
 
             await _productRepository.Add(product);
 
-            await _hubContext.Clients.All.SendAsync("Update");
+            //await _hubContext.Clients.All.SendAsync("Update");
+            // Thông báo đến tất cả client
+            await _hubContext.Clients.All.SendAsync("Created");
         }
 
         public async Task Update(Product product)
@@ -44,11 +47,8 @@ namespace Services.Service
 
             await _productRepository.Update(product);
 
-            if (product != null)
-            {
-                await _hubContext.Clients.All.SendAsync("Update");
-            }
-        }
+			await _hubContext.Clients.All.SendAsync("Updated");
+		}
 
         public async Task Delete(int id)
         {
@@ -62,7 +62,7 @@ namespace Services.Service
 
             if (product != null)
             {
-                await _hubContext.Clients.All.SendAsync("Update");
+                await _hubContext.Clients.All.SendAsync("Deleted");
             }
         }
 
