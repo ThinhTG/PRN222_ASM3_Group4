@@ -5,8 +5,6 @@
 @inject NavigationManager Navigation
 @rendermode InteractiveServer
 <CascadingAuthenticationState>
-	<h3>Categories</h3>
-
 	<AuthorizeView Roles="Admin">
 		<Authorized Context="authContext">
 			<div class="container mt-4">
@@ -135,25 +133,75 @@
 </style>
 
 @code {
-	private Category newCategory = new();
-	private string? errorMessage, successMessage;
+    private Category newCategory = new();
+    private string? errorMessage, successMessage;
+    private HubConnection? hubConnection;
+    private bool isLoading = true;
 
-	private async Task AddCategory()
-	{
-		if (string.IsNullOrEmpty(newCategory.CategoryName))
-		{
-			errorMessage = "Category Name is required.";
-			return;
-		}
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            // Khởi tạo SignalR connection
+            hubConnection = new HubConnectionBuilder()
+                .WithUrl(Navigation.BaseUri + "hub")
+                .WithAutomaticReconnect()
+                .Build();
+
+            // Đăng ký sự kiện nhận thông báo khi category được tạo
+            hubConnection.On<string>("Created", (categoryName) =>
+            {
+                successMessage = $"New category added: {categoryName}";
+                StateHasChanged();
+            });
+
+            // Bắt đầu kết nối
+            await hubConnection.StartAsync();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error initializing SignalR: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task AddCategory()
+    {
+        if (string.IsNullOrEmpty(newCategory.CategoryName))
+        {
+            errorMessage = "Category Name is required.";
+            return;
+        }
 
         try
         {
+            // Thêm category mới
             await CategoryService.Add(newCategory);
+
+            // Gửi thông báo qua SignalR
+            await hubConnection.SendAsync("SendMessage");
+
+            // Điều hướng sau khi thêm thành công
             Navigation.NavigateTo("/categories");
+
+            successMessage = $"Category '{newCategory.CategoryName}' added successfully!";
+            newCategory = new(); // Reset form
         }
         catch (Exception ex)
         {
             errorMessage = $"Error adding category: {ex.Message}";
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (hubConnection is not null)
+        {
+            await hubConnection.DisposeAsync();
         }
     }
 }
