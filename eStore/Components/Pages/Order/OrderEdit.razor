@@ -3,7 +3,7 @@
 @inject Services.InterfaceService.IOrderService OrderService
 @inject Services.InterfaceService.IOrderDetailService OrderDetailService
 @inject Services.InterfaceService.IMemberService MemberService
-@inject Services.InterfaceService.IProductService ProductService 
+@inject Services.InterfaceService.IProductService ProductService
 @inject NavigationManager Navigation
 @rendermode InteractiveServer
 
@@ -48,106 +48,130 @@
             <EditForm Model="order" OnValidSubmit="UpdateOrder">
                 <DataAnnotationsValidator />
                 <div class="row">
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            <label class="form-label"><i class="bi bi-hash me-2"></i>Order ID</label>
-                            <InputNumber class="form-control" @bind-Value="order.OrderId" readonly />
-                        </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label"><i class="bi bi-hash me-2"></i>Order ID</label>
+                        <InputNumber class="form-control" @bind-Value="order.OrderId" readonly />
                     </div>
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            <label class="form-label"><i class="bi bi-person me-2"></i>Member</label>
-                            <InputSelect class="form-control" @bind-Value="order.MemberId">
-                                <option value="0" disabled>Select a member</option>
-                                @foreach (var member in members)
-                                {
-                                    <option value="@member.MemberId">@member.Email</option>
-                                }
-                            </InputSelect>
-                            <ValidationMessage For="@(() => order.MemberId)" class="text-danger" />
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            <label class="form-label"><i class="bi bi-calendar me-2"></i>Order Date</label>
-                            <InputDate class="form-control" @bind-Value="order.OrderDate" />
-                            <ValidationMessage For="@(() => order.OrderDate)" class="text-danger" />
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            <label class="form-label"><i class="bi bi-calendar-check me-2"></i>Required Date</label>
-                            <InputDate class="form-control" @bind-Value="order.RequiredDate" />
-                            <ValidationMessage For="@(() => order.RequiredDate)" class="text-danger" />
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            <label class="form-label"><i class="bi bi-truck me-2"></i>Shipped Date</label>
-                            <InputDate class="form-control" @bind-Value="order.ShippedDate" />
-                            <ValidationMessage For="@(() => order.ShippedDate)" class="text-danger" />
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            <label class="form-label"><i class="bi bi-cash me-2"></i>Freight</label>
-                            <InputNumber class="form-control" @bind-Value="order.Freight" />
-                            <ValidationMessage For="@(() => order.Freight)" class="text-danger" />
-                        </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label"><i class="bi bi-person me-2"></i>Member</label>
+                        <InputSelect class="form-control" @bind-Value="order.MemberId">
+                            <option value="0" disabled>Select a member</option>
+                            @foreach (var member in members)
+                            {
+                                <option value="@member.MemberId">@member.Email</option>
+                            }
+                        </InputSelect>
+                        <ValidationMessage For="@(() => order.MemberId)" class="text-danger" />
                     </div>
                 </div>
 
-                <!-- Phần hiển thị và chỉnh sửa OrderDetail -->
-                <h4 class="mt-4">Order Details</h4>
-                @if (order.OrderDetails != null && order.OrderDetails.Any())
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label"><i class="bi bi-calendar me-2"></i>Order Date</label>
+                        <InputDate class="form-control" @bind-Value="order.OrderDate" />
+                        <ValidationMessage For="@(() => order.OrderDate)" class="text-danger" />
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label"><i class="bi bi-calendar-check me-2"></i>Required Date</label>
+                        <InputDate class="form-control" @bind-Value="order.RequiredDate" />
+                        <ValidationMessage For="@(() => order.RequiredDate)" class="text-danger" />
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label"><i class="bi bi-truck me-2"></i>Shipped Date</label>
+                        <InputDate class="form-control" @bind-Value="order.ShippedDate" />
+                        <ValidationMessage For="@(() => order.ShippedDate)" class="text-danger" />
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label"><i class="bi bi-cash me-2"></i>Freight</label>
+                    <InputNumber class="form-control" @bind-Value="order.Freight" />
+                    <ValidationMessage For="@(() => order.Freight)" class="text-danger" />
+                </div>
+
+                <!-- Order Details Table -->
+                <h4 class="mt-4 d-flex justify-content-between align-items-center">
+                    <span>Order Details</span>
+                    <button type="button" class="btn btn-sm btn-primary" @onclick="() => showAddProduct = !showAddProduct">
+                        <i class="bi bi-@(showAddProduct ? "dash" : "plus")-circle me-1"></i>
+                        @(showAddProduct ? "Hide" : "Add Product")
+                    </button>
+                </h4>
+
+                @if (order.OrderDetails?.Any() == true)
                 {
-                    <table class="table table-bordered">
-                        <thead>
-                            <tr>
-                                <th>Product ID</th>
-                                <th>Unit Price</th>
-                                <th>Quantity</th>
-                                <th>Discount</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var detail in order.OrderDetails)
-                            {
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover">
+                            <thead class="table-light">
                                 <tr>
-                                    <td><InputNumber class="form-control" @bind-Value="detail.ProductId" readonly /></td>
-                                    <td><InputNumber class="form-control" @bind-Value="detail.UnitPrice" /></td>
-                                    <td><InputNumber class="form-control" @bind-Value="detail.Quantity" /></td>
-                                    <td><InputNumber class="form-control" @bind-Value="detail.Discount" /></td>
+                                    <th>Product</th>
+                                    <th>Unit Price</th>
+                                    <th>Quantity</th>
+                                    <th>Discount</th>
+                                    <th>Actions</th>
                                 </tr>
-                            }
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                @foreach (var detail in order.OrderDetails)
+                                {
+                                    <tr>
+                                        <td>
+                                            @(products.FirstOrDefault(p => p.ProductId == detail.ProductId)?.ProductName ?? $"Product #{detail.ProductId}")
+                                        </td>
+                                        <td><InputNumber class="form-control form-control-sm" @bind-Value="detail.UnitPrice" /></td>
+                                        <td><InputNumber class="form-control form-control-sm" @bind-Value="detail.Quantity" /></td>
+                                        <td><InputNumber class="form-control form-control-sm" @bind-Value="detail.Discount" /></td>
+                                        <td>
+                                            <button type="button" class="btn btn-sm btn-danger" @onclick="() => RemoveOrderDetail(detail)">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
                 }
                 else
                 {
-                    <p>No order details available. Add a new one below:</p>
-                    <div class="row">
-                        <div class="col-md-3">
-                            <label class="form-label">Product</label>
-                            <InputSelect class="form-control" @bind-Value="newOrderDetail.ProductId">
-                                <option value="0" disabled>Select a product</option>
-                                @foreach (var product in products)
-                                {
-                                    <option value="@product.ProductId">@product.ProductName</option>
-                                }
-                            </InputSelect>
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label">Unit Price</label>
-                            <InputNumber class="form-control" @bind-Value="newOrderDetail.UnitPrice" />
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label">Quantity</label>
-                            <InputNumber class="form-control" @bind-Value="newOrderDetail.Quantity" />
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label">Discount</label>
-                            <InputNumber class="form-control" @bind-Value="newOrderDetail.Discount" />
+                    <div class="alert alert-info">No products have been added to this order yet.</div>
+                }
+
+                <!-- Add Product Form -->
+                @if (showAddProduct)
+                {
+                    <div class="card border-primary mt-3 mb-3">
+                        <div class="card-header bg-primary text-white">Add New Product</div>
+                        <div class="card-body">
+                            <div class="row g-2 align-items-end">
+                                <div class="col-md-4">
+                                    <label class="form-label">Product</label>
+                                    <InputSelect class="form-control" @bind-Value="newOrderDetail.ProductId">
+                                        <option value="0" disabled>Select a product</option>
+                                        @foreach (var product in products)
+                                        {
+                                            <option value="@product.ProductId">@product.ProductName</option>
+                                        }
+                                    </InputSelect>
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label">Price</label>
+                                    <InputNumber class="form-control" @bind-Value="newOrderDetail.UnitPrice" />
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label">Quantity</label>
+                                    <InputNumber class="form-control" @bind-Value="newOrderDetail.Quantity" />
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label">Discount</label>
+                                    <InputNumber class="form-control" @bind-Value="newOrderDetail.Discount" />
+                                </div>
+                                <div class="col-md-2">
+                                    <button type="button" class="btn btn-success w-100" @onclick="AddProductToOrder">
+                                        <i class="bi bi-plus-circle me-1"></i>Add
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 }
@@ -171,17 +195,20 @@
 
     private Order order;
     private List<Member> members = new();
-    private List<Product> products = new(); // Danh sách sản phẩm
-    private OrderDetail newOrderDetail = new OrderDetail(); // Đối tượng để thêm OrderDetail mới
+    private List<Product> products = new();
+    private OrderDetail newOrderDetail = new();
     private string errorMessage;
     private string successMessage;
     private bool isLoading = true;
+    private bool showAddProduct = false;
 
     protected override async Task OnInitializedAsync()
     {
         try
         {
-            // Fetch the order with OrderDetails
+            isLoading = true;
+
+            // Load data sequentially to avoid DbContext threading issues
             order = await OrderService.GetOrderById(Id);
             if (order == null)
             {
@@ -195,19 +222,19 @@
                 order.OrderDetails = (await OrderDetailService.GetOrderDetails(Id)).ToList();
             }
 
-            // Fetch the members
+            // Now fetch members and products
             members = (await MemberService.GetAllMembersAsync()).ToList();
-            if (!members.Any())
-            {
-                errorMessage = "No members available. Please add a member first.";
-                return;
-            }
-
-            // Fetch the products
             products = (await ProductService.GetAllProducts()).ToList();
-            if (!products.Any())
+
+            // Set default values for new order detail
+            newOrderDetail = new OrderDetail();
+            if (products.Any())
             {
-                errorMessage = "No products available. Please add a product first.";
+                var firstProduct = products.First();
+                newOrderDetail.ProductId = firstProduct.ProductId;
+                newOrderDetail.UnitPrice = firstProduct.UnitPrice;
+                newOrderDetail.Quantity = 1;
+                newOrderDetail.Discount = 0;
             }
         }
         catch (Exception ex)
@@ -217,8 +244,57 @@
         finally
         {
             isLoading = false;
-            StateHasChanged();
         }
+    }
+
+    private void AddProductToOrder()
+    {
+        if (newOrderDetail.ProductId <= 0)
+        {
+            errorMessage = "Please select a product.";
+            return;
+        }
+
+        if (newOrderDetail.Quantity <= 0)
+        {
+            errorMessage = "Quantity must be greater than zero.";
+            return;
+        }
+
+        // Check for duplicates
+        if (order.OrderDetails?.Any(od => od.ProductId == newOrderDetail.ProductId) == true)
+        {
+            errorMessage = "This product is already in the order.";
+            return;
+        }
+
+        // Initialize OrderDetails collection if needed
+        order.OrderDetails ??= new List<OrderDetail>();
+
+        // Add new order detail
+        order.OrderDetails.Add(new OrderDetail
+            {
+                OrderId = order.OrderId,
+                ProductId = newOrderDetail.ProductId,
+                UnitPrice = newOrderDetail.UnitPrice,
+                Quantity = newOrderDetail.Quantity,
+                Discount = newOrderDetail.Discount
+            });
+
+        // Reset form and show success message
+        successMessage = "Product added to the order.";
+        newOrderDetail = new OrderDetail
+            {
+                ProductId = products.First().ProductId,
+                UnitPrice = products.First().UnitPrice,
+                Quantity = 1,
+                Discount = 0
+            };
+    }
+
+    private void RemoveOrderDetail(OrderDetail detail)
+    {
+        order.OrderDetails?.Remove(detail);
     }
 
     private async Task UpdateOrder()
@@ -242,33 +318,25 @@
             // Update Order
             await OrderService.UpdateOrder(order);
 
-            // Update existing OrderDetails
-            if (order.OrderDetails != null && order.OrderDetails.Any())
+            // Process OrderDetails
+            if (order.OrderDetails?.Any() == true)
             {
                 foreach (var detail in order.OrderDetails)
                 {
+                    // Ensure OrderId is set
+                    detail.OrderId = order.OrderId;
+
+                    // Update or create each detail
                     await OrderDetailService.UpdateOrderDetail(detail);
                 }
             }
 
-            // Add new OrderDetail if provided
-            if (newOrderDetail.ProductId > 0 && newOrderDetail.Quantity > 0)
-            {
-                newOrderDetail.OrderId = order.OrderId;
-                await OrderDetailService.CreateOrderDetail(newOrderDetail);
-            }
-
-            successMessage = "Order and details updated successfully!";
             Navigation.NavigateTo("/orders");
         }
         catch (Exception ex)
         {
             errorMessage = $"Error updating order: {ex.Message}";
-        }
-        finally
-        {
             isLoading = false;
-            StateHasChanged();
         }
     }
 }

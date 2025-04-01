@@ -10,6 +10,7 @@
 @inject Cloudinary Cloudinary
 @rendermode InteractiveServer
 @inject Services.Service.CustomAuthStateProvider Auth
+@inject AuthenticationStateProvider AuthenticationStateProvider
 
 
 
@@ -256,12 +257,17 @@
     {
         try
         {
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+            IsAdmin = user.IsInRole("Admin");
+            categories = await CategoryService.GetAll();
+            if (!categories.Any())
             hubConnection = new HubConnectionBuilder()
                 .WithUrl(Navigation.BaseUri + "hub")
                 .WithAutomaticReconnect()
                 .Build();
-
             hubConnection.On<string>("Created", (productName) =>
+
             {
                 successMessage = $"New product added: {productName}";
                 StateHasChanged();

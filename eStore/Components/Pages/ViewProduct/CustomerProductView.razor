@@ -1,5 +1,8 @@
 ﻿@page "/shop"
 @using BusinessObject.Models
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Components.Authorization
+@inject Services.InterfaceService.IOrderDetailService OrderDetailService
 @inject Services.InterfaceService.IProductService ProductService
 @inject Services.InterfaceService.ICategoryService CategoryService
 @inject NavigationManager Navigation
@@ -60,6 +63,16 @@
             <button type="button" class="btn-close" @onclick="() => errorMessage = null"></button>
         </div>
     }
+
+    <!-- Success Message -->
+    @if (!string.IsNullOrEmpty(successMessage))
+    {
+        <div class="alert alert-success alert-dismissible fade show custom-alert" role="alert">
+            <i class="bi bi-check-circle-fill"></i> @successMessage
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
 
     <!-- Product Grid -->
     <div class="row g-4">
@@ -266,9 +279,14 @@
     private string searchName = string.Empty;
     private decimal? searchPrice = null;
     private int? selectedCategoryId = null;
+    private OrderDetail newOrderDetail = new();
     private string sortOption = "name-asc";
     private string errorMessage;
-
+    private Order order;
+    private string successMessage;
+    private List<OrderDetail> cartItems = new List<OrderDetail>();
+    [Inject]
+    private AuthenticationStateProvider AuthStateProvider { get; set; }
     protected override async Task OnInitializedAsync()
     {
         try
@@ -302,8 +320,46 @@
         }
     }
 
-    private void AddToCart(Product product)
+    private async Task AddToCart(Product product)
     {
-        // Thêm logic để thêm sản phẩm vào giỏ hàng (nếu cần)
+        try
+        {
+            // Check if we already have this product in the database with a null OrderId
+            // (This would require a new method in your OrderDetailService)
+            
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var memberId = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var existingOrderDetail = await OrderDetailService.GetOrderDetailByProductIdWithNullOrderId(product.ProductId, int.Parse(memberId));
+            if (existingOrderDetail != null)
+            {
+                // Update the quantity of the existing record
+                existingOrderDetail.Quantity += 1;
+                await OrderDetailService.UpdateOrderDetail(existingOrderDetail);
+                successMessage = $"Added another {product.ProductName} to your cart. Total: {existingOrderDetail.Quantity}";
+            }
+            else
+            {
+                // Create a new OrderDetail with null OrderId
+                var newOrderDetail = new OrderDetail
+                    {
+                        OrderId = null, // This will be set when the order is finalized
+                        ProductId = product.ProductId,
+                        UnitPrice = product.UnitPrice,
+                        Quantity = 1,
+                        Discount = 0,
+                        MemberId = int.Parse(memberId)
+                    };
+
+                // Save directly to the database
+                await OrderDetailService.CreateOrderDetail(newOrderDetail);
+                successMessage = $"Added {product.ProductName} to your cart.";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error adding to cart: {ex.Message}";
+        }
     }
+
+
 }
