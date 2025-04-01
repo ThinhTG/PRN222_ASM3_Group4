@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Server;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Services.HubSignalR;
 using Services.Service;
 
 namespace eStore
@@ -16,6 +17,8 @@ namespace eStore
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
+            builder.Services.AddRazorComponents()
+                .AddInteractiveServerComponents();
 
             builder.Services.AddRazorComponents().AddInteractiveServerComponents();
             builder.Services.AddScoped<AuthenticationStateProvider, CustomAuthStateProvider>();

@@ -1,14 +1,45 @@
-﻿@inherits LayoutComponentBase
+﻿@using Microsoft.AspNetCore.Components.Authorization
+@using Services.Service
+@inherits LayoutComponentBase
+@inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthStateProvider
 
 <div class="page">
     <div class="sidebar">
-        <NavMenu />
+    <AdminNavMenu />
     </div>
+    @* @if (IsAuthenticated) *@
+    @* { *@
+    @*     <div class="sidebar"> *@
+    @*         @switch (UserRole) *@
+    @*         { *@
+    @*             case "Admin": *@
+    @*                 <AdminNavMenu /> *@
+    @*                 break; *@
+    @*             case "Customer": *@
+    @*                 <CustomerNavMenu /> *@
+    @*                 break; *@
+    @*             case "Staff": *@
+    @*                 <StaffNavMenu /> *@
+    @*                 break; *@
+    @*             default: *@
+    @*                 <GuestNavMenu /> *@
+    @*                 break; *@
+    @*         } *@
+    @*     </div> *@
+    @* } *@
 
     <main>
         <div class="top-row px-4">
-            <a href="/login" class="auth-button login-button">Login</a>
-            <a href="/register" class="auth-button register-button">Register</a>
+            @if (IsAuthenticated)
+            {
+                <a href="#" class="auth-button logout-button" @onclick="Logout">Logout</a>
+            }
+            else
+            {
+                <a href="/login" class="auth-button login-button">Login</a>
+                <a href="/register" class="auth-button register-button">Register</a>
+            }
         </div>
 
         <article class="content px-4">
@@ -23,52 +54,78 @@
     <a class="dismiss">🗙</a>
 </div>
 
+@code {
+    private bool IsAuthenticated { get; set; }
+    private string UserRole { get; set; } = "Customer"; // Mặc định là Guest
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var customAuthStateProvider = (CustomAuthStateProvider)AuthStateProvider;
+            var authState = await customAuthStateProvider.GetAuthenticationStateAsync();
+            IsAuthenticated = authState.User.Identity?.IsAuthenticated ?? false;
+
+            if (IsAuthenticated)
+            {
+                UserRole = await customAuthStateProvider.GetUserRoleAsync();
+            }
+
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error retrieving authentication state: {ex.Message}");
+        }
+    }
+
+
+    private async Task Logout()
+    {
+        try
+        {
+            var customAuthStateProvider = (CustomAuthStateProvider)AuthStateProvider;
+            await customAuthStateProvider.LogoutAsync();
+
+            IsAuthenticated = false;
+            UserRole = "Customer";
+            Navigation.NavigateTo("/shop", forceLoad: true);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error during logout: {ex.Message}");
+        }
+    }
+}
+
 <style>
-    /* Page container */
+    /* Giữ nguyên toàn bộ style từ code gốc */
     .page {
         display: flex;
         flex-direction: row;
         min-height: 100vh;
     }
 
-    /* Sidebar styling */
     .sidebar {
         width: 250px;
-        background-color: #1e293b; /* Dark slate */
+        background-color: #1e293b;
         flex-shrink: 0;
     }
 
-    /* Main content area */
     main {
         flex: 1;
-        background-color: #f8fafc; /* Light gray */
+        background-color: #f8fafc;
     }
 
-    /* Top row styling */
     .top-row {
         display: flex;
         justify-content: flex-end;
         align-items: center;
         padding: 1rem;
         background-color: #ffffff;
-        border-bottom: 1px solid #e2e8f0; /* Light gray border */
+        border-bottom: 1px solid #e2e8f0;
     }
 
-    /* About link */
-    .about-link {
-        color: #4b5563; /* Gray */
-        text-decoration: none;
-        margin-right: 20px;
-        font-weight: 500;
-        transition: color 0.2s ease;
-    }
-
-    .about-link:hover {
-        color: #1f2937; /* Darker gray */
-        text-decoration: underline;
-    }
-
-    /* Auth buttons (shared styles) */
     .auth-button {
         padding: 8px 16px;
         border-radius: 8px;
@@ -79,38 +136,44 @@
         display: inline-block;
     }
 
-    /* Login button */
     .login-button {
-        background: linear-gradient(to right, #ed8936, #f56565); /* Orange to red */
+        background: linear-gradient(to right, #ed8936, #f56565);
         color: #ffffff;
         margin-right: 10px;
     }
 
-    .login-button:hover {
-        background: linear-gradient(to right, #f56565, #ed8936); /* Reverse gradient */
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-    }
+        .login-button:hover {
+            background: linear-gradient(to right, #f56565, #ed8936);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
 
-    /* Register button */
     .register-button {
-        background: linear-gradient(to right, #6b7280, #3b82f6); /* Gray to blue */
+        background: linear-gradient(to right, #6b7280, #3b82f6);
         color: #ffffff;
     }
 
-    .register-button:hover {
-        background: linear-gradient(to right, #3b82f6, #6b7280); /* Reverse gradient */
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        .register-button:hover {
+            background: linear-gradient(to right, #3b82f6, #6b7280);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+    .logout-button {
+        background: linear-gradient(to right, #dc2626, #f87171);
+        color: #ffffff;
     }
 
-    /* Content area */
+        .logout-button:hover {
+            background: linear-gradient(to right, #f87171, #dc2626);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
     .content {
         padding: 1rem;
     }
 
-    /* Error UI (unchanged but styled for consistency) */
     #blazor-error-ui {
-        background-color: #fee2e2; /* Light red */
-        color: #dc2626; /* Bright red */
+        background-color: #fee2e2;
+        color: #dc2626;
         padding: 1rem;
         text-align: center;
         position: fixed;
@@ -118,15 +181,15 @@
         width: 100%;
     }
 
-    #blazor-error-ui .reload,
-    #blazor-error-ui .dismiss {
-        color: #dc2626;
-        margin-left: 10px;
-        text-decoration: none;
-    }
+        #blazor-error-ui .reload,
+        #blazor-error-ui .dismiss {
+            color: #dc2626;
+            margin-left: 10px;
+            text-decoration: none;
+        }
 
-    #blazor-error-ui .reload:hover,
-    #blazor-error-ui .dismiss:hover {
-        text-decoration: underline;
-    }
+            #blazor-error-ui .reload:hover,
+            #blazor-error-ui .dismiss:hover {
+                text-decoration: underline;
+            }
 </style>

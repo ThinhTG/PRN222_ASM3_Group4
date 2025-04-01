@@ -186,7 +186,7 @@ else if (reportGenerated)
                     itemCount += detail.Quantity;
 
                     // Track product performance
-                    var product = ProductService.GetById(detail.ProductId);
+                    var product = await ProductService.GetById(detail.ProductId);
 
                     var existingProduct = productPerformance.FirstOrDefault(p => p.ProductId == detail.ProductId);
                     if (existingProduct != null)
@@ -199,7 +199,7 @@ else if (reportGenerated)
                         productPerformance.Add(new ProductPerformance
                         {
                             ProductId = detail.ProductId,
-                            ProductName = product?.ProductName ?? "Unknown Product",
+                                ProductName = product?.ProductName ?? "Unknown Product",
                             UnitsSold = detail.Quantity,
                             TotalRevenue = itemTotal
                         });

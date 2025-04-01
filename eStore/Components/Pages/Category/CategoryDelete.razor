@@ -10,7 +10,7 @@
 	<AuthorizeView Roles="Admin">
         <Authorized Context="authContext">
 <div class="container mt-5">
-    <h3 class="mb-4 text-danger fw-bold">Confirm Delete</h3>
+    <h3 class="mb-4 text-danger">Confirm Delete</h3>
 
     @if (category == null)
     {
@@ -83,28 +83,101 @@
 
 </CascadingAuthenticationState>
 <style>
+    h3.text-danger {
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        text-align: center;
+        font-size: 2rem;
+        padding-bottom: 10px;
+        display: inline-block;
+        position: relative;
+        background: linear-gradient(90deg, #ff0000, #cc0000);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        border-bottom: 4px solid #ff0000;
+        box-shadow: 0px 4px 6px rgba(255, 0, 0, 0.4);
+    }
+
     .card {
-        background-color: #fff;
+        background: #fff;
         transition: transform 0.2s ease, box-shadow 0.3s ease;
+        border-radius: 12px;
+        padding: 20px;
     }
 
         .card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1) !important;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+        }
+
+    .image-container {
+        position: relative;
+        overflow: hidden;
+        border-radius: 10px;
+    }
+
+        .image-container img {
+            transition: transform 0.3s ease-in-out;
+            width: 100%;
+            height: auto;
+        }
+
+            .image-container img:hover {
+                transform: scale(1.08);
+            }
+
+    .btn-lg {
+        font-size: 1.2rem;
+        border-radius: 8px;
+        transition: all 0.2s ease-in-out;
+    }
+
+    .btn-danger {
+        background: linear-gradient(135deg, #ff416c, #ff4b2b);
+        border: none;
+    }
+
+        .btn-danger:hover {
+            background: linear-gradient(135deg, #ff2e63, #ff1e50);
+            transform: scale(1.05);
+        }
+
+    .btn-outline-secondary {
+        border-color: #6c757d;
+    }
+
+        .btn-outline-secondary:hover {
+            background: #6c757d;
+            color: #fff;
+            transform: scale(1.05);
         }
 
     .badge {
-        font-size: 0.9rem;
-        padding: 0.5em 1em;
+        font-size: 1rem;
+        padding: 0.6em 1.2em;
+        font-weight: bold;
+        border-radius: 10px;
     }
 
-    .btn-lg {
-        font-size: 1.1rem;
-        border-radius: 8px;
-    }
+        .badge.bg-success {
+            background: linear-gradient(135deg, #28a745, #218838);
+            color: white;
+        }
+
+        .badge.bg-danger {
+            background: linear-gradient(135deg, #dc3545, #b52b3a);
+            color: white;
+        }
 
     .text-danger {
-        color: #dc3545 !important;
+        color: #ff2e63 !important;
+        font-weight: bold;
+    }
+
+    .text-success {
+        color: #28a745 !important;
+        font-weight: bold;
     }
 
     .text-dark {
@@ -128,7 +201,7 @@
     {
         try
         {
-            category = CategoryService.GetById(Id);
+            category = await CategoryService.GetById(Id);
             if (category == null)
             {
                 errorMessage = "Category not found.";
@@ -146,7 +219,7 @@
         {
             isDeleting = true;
             StateHasChanged();
-            CategoryService.Delete(Id);
+            await CategoryService.Delete(Id);
             Navigation.NavigateTo("/categories");
         }
         catch (Exception ex)

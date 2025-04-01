@@ -1,0 +1,309 @@
+﻿@page "/shop"
+@using BusinessObject.Models
+@inject Services.InterfaceService.IProductService ProductService
+@inject Services.InterfaceService.ICategoryService CategoryService
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+
+<div class="container mt-5">
+    <!-- Header Section -->
+    <div class="text-center mb-5">
+        <h1 class="display-4 fw-bold text-primary">Welcome to eStore</h1>
+        <p class="lead text-muted">Explore our wide range of products and enjoy a seamless shopping experience!</p>
+    </div>
+
+    <!-- Search and Filter Section -->
+    <div class="row mb-4">
+        <div class="col-md-6 col-lg-4 mb-3">
+            <div class="input-group">
+                <span class="input-group-text bg-primary text-white"><i class="bi bi-search"></i></span>
+                <input type="text" class="form-control" placeholder="Search by product name"
+                       @bind="searchName" @bind:event="oninput" />
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-3 mb-3">
+            <div class="input-group">
+                <span class="input-group-text bg-primary text-white">$</span>
+                <input type="number" class="form-control" placeholder="Max price"
+                       @bind="searchPrice" @bind:event="oninput" />
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-3 mb-3">
+            <select class="form-select" @bind="selectedCategoryId">
+                <option value="">All Categories</option>
+                @foreach (var category in categories)
+                {
+                    <option value="@category.CategoryId">@category.CategoryName</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-6 col-lg-3 mb-3">
+            <select class="form-select" @bind="sortOption">
+                <option value="name-asc">Sort by Name (A-Z)</option>
+                <option value="name-desc">Sort by Name (Z-A)</option>
+                <option value="price-asc">Sort by Price (Low to High)</option>
+                <option value="price-desc">Sort by Price (High to Low)</option>
+            </select>
+        </div>
+        <div class="col-md-6 col-lg-2 mb-3">
+            <button class="btn btn-primary w-100" @onclick="SearchAndSortProducts">
+                <i class="bi bi-funnel me-2"></i>Filter & Sort
+            </button>
+        </div>
+    </div>
+
+    <!-- Error Message -->
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+            @errorMessage
+            <button type="button" class="btn-close" @onclick="() => errorMessage = null"></button>
+        </div>
+    }
+
+    <!-- Product Grid -->
+    <div class="row g-4">
+        @foreach (var product in products)
+        {
+            <div class="col-md-6 col-lg-4">
+                <div class="card product-card h-100 shadow-sm">
+                    <div class="product-image-container">
+                        @if (!string.IsNullOrEmpty(product.ImageUrl))
+                        {
+                            <img src="@product.ImageUrl" alt="@product.ProductName" class="card-img-top product-image" />
+                        }
+                        else
+                        {
+                            <div class="card-img-top placeholder-image d-flex align-items-center justify-content-center bg-light">
+                                <span class="text-muted">No Image</span>
+                            </div>
+                        }
+                    </div>
+                    <div class="card-body d-flex flex-column">
+                        <h5 class="card-title">@product.ProductName</h5>
+                        <p class="card-text text-muted mb-2">@(product.Category?.CategoryName ?? "N/A")</p>
+                        <p class="card-text text-primary fw-bold">@product.UnitPrice.ToString("C")</p>
+                        <p class="card-text text-success">
+                            @if (product.UnitsInStock > 0)
+                            {
+                                <span>In Stock: @product.UnitsInStock</span>
+                            }
+                            else
+                            {
+                                <span class="text-danger">Out of Stock</span>
+                            }
+                        </p>
+                        <div class="mt-auto d-flex gap-2">
+                            @{
+                                var productDetailsUrl = $"/shop/details/{product.ProductId}";
+                            }
+
+                            <NavLink class="btn btn-primary w-100" href="@productDetailsUrl">
+                                <i class="bi bi-eye me-2"></i>View Details
+                            </NavLink>
+
+
+                            @if (product.UnitsInStock > 0)
+                            {
+                                <button class="btn btn-success w-100" @onclick="() => AddToCart(product)">
+                                    <i class="bi bi-cart-plus me-2"></i>Add to Cart
+                                </button>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- No Products Message -->
+    @if (!products.Any())
+    {
+        <div class="text-center mt-5">
+            <h5 class="text-muted">No products available at the moment.</h5>
+            <p>Check back later for exciting new items!</p>
+        </div>
+    }
+</div>
+
+<style>
+    /* General Styling */
+    body {
+        background-color: #f8f9fa;
+    }
+
+    .container {
+        max-width: 1400px;
+    }
+
+    /* Header Styling */
+    .display-4 {
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        background: linear-gradient(90deg, #007bff, #00c6ff);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        text-shadow: 2px 2px 5px rgba(0, 123, 255, 0.2);
+    }
+
+    .lead {
+        font-size: 1.2rem;
+        color: #6c757d;
+    }
+
+    /* Search and Filter Styling */
+    .input-group-text {
+        background-color: #007bff;
+        color: white;
+        border-radius: 8px 0 0 8px;
+    }
+
+    .input-group .form-control,
+    .form-select {
+        border-radius: 0 8px 8px 0;
+        transition: all 0.3s ease;
+    }
+
+        .input-group .form-control:focus,
+        .form-select:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 8px rgba(0, 123, 255, 0.3);
+        }
+
+    .btn-primary {
+        background-color: #007bff;
+        border: none;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+
+        .btn-primary:hover {
+            background-color: #0056b3;
+            transform: scale(1.05);
+        }
+
+    /* Product Card Styling */
+    .product-card {
+        border: none;
+        border-radius: 15px;
+        overflow: hidden;
+        transition: all 0.3s ease;
+    }
+
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+
+    .product-image-container {
+        position: relative;
+        height: 200px;
+        overflow: hidden;
+    }
+
+    .product-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: all 0.3s ease;
+    }
+
+        .product-image:hover {
+            transform: scale(1.1);
+        }
+
+    .placeholder-image {
+        width: 100%;
+        height: 200px;
+        font-size: 1.1rem;
+    }
+
+    .card-body {
+        padding: 1.5rem;
+    }
+
+    .card-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 0.5rem;
+    }
+
+    .card-text {
+        font-size: 0.95rem;
+    }
+
+    .btn-success {
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+
+        .btn-success:hover {
+            background-color: #28a745;
+            transform: scale(1.05);
+        }
+
+    /* Responsive Design */
+    @@media (max-width: 768px) {
+        .display-4 {
+            font-size: 2rem;
+        }
+
+        .lead {
+            font-size: 1rem;
+        }
+
+        .product-card {
+            margin-bottom: 1.5rem;
+        }
+    }
+</style>
+
+@code {
+    private IEnumerable<Product> products = Enumerable.Empty<Product>();
+    private IEnumerable<Category> categories = Enumerable.Empty<Category>();
+    private string searchName = string.Empty;
+    private decimal? searchPrice = null;
+    private int? selectedCategoryId = null;
+    private string sortOption = "name-asc";
+    private string errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            products = await ProductService.GetAll();
+            categories = await CategoryService.GetAll();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error loading products: {ex.Message}";
+        }
+    }
+
+    private async Task SearchAndSortProducts()
+    {
+        try
+        {
+            products = await ProductService.Search(searchName, searchPrice);
+            if (!products.Any())
+            {
+                errorMessage = "No products match your criteria.";
+            }
+            else
+            {
+                errorMessage = null;
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error searching products: {ex.Message}";
+        }
+    }
+
+    private void AddToCart(Product product)
+    {
+        // Thêm logic để thêm sản phẩm vào giỏ hàng (nếu cần)
+    }
+}

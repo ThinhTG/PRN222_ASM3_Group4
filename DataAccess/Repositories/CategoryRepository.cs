@@ -1,6 +1,10 @@
 ﻿using BusinessObject.Models;
 using DataAccess.DBContext;
 using DataAccess.InterfaceRepo;
+using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace DataAccess.Repositories;
 
@@ -13,49 +17,49 @@ public class CategoryRepository : ICategoryRepository
         _context = context;
     }
 
-    public IEnumerable<Category> GetAll()
+    public async Task<IEnumerable<Category>> GetAll()
     {
-        return _context.Categories.ToList();
+        return await _context.Categories.ToListAsync();
     }
 
-    public Category GetById(int id)
+    public async Task<Category> GetById(int id)
     {
-        return _context.Categories.FirstOrDefault(p => p.CategoryId == id);
+        return await _context.Categories.FirstOrDefaultAsync(p => p.CategoryId == id);
     }
 
-    public void Add(Category category)
+    public async Task Add(Category category)
     {
         if (category == null)
             throw new ArgumentNullException(nameof(category));
 
         _context.Categories.Add(category);
-        _context.SaveChanges();
+        await _context.SaveChangesAsync();
     }
 
-    public void Update(Category category)
+    public async Task Update(Category category)
     {
         if (category == null)
             throw new ArgumentNullException(nameof(category));
 
-        var existingCategory = _context.Categories.Find(category.CategoryId);
+        var existingCategory = await _context.Categories.FindAsync(category.CategoryId);
         if (existingCategory == null)
             throw new ArgumentException("Category not found");
 
         _context.Categories.Update(category);
-        _context.SaveChanges();
+        await _context.SaveChangesAsync();
     }
 
-    public void Delete(int id)
+    public async Task Delete(int id)
     {
-        var category = _context.Categories.Find(id);
+        var category = await _context.Categories.FindAsync(id);
         if (category == null)
             throw new ArgumentException("Category not found");
 
         _context.Categories.Remove(category);
-        _context.SaveChanges();
+        await _context.SaveChangesAsync();
     }
 
-    public IEnumerable<Category> Search(string categoryName)
+    public async Task<IEnumerable<Category>> Search(string categoryName)
     {
         var query = _context.Categories.AsQueryable();
 
@@ -65,6 +69,6 @@ public class CategoryRepository : ICategoryRepository
             query = query.Where(p => p.CategoryName.ToLower().Contains(searchNameLower));
         }
 
-        return query.ToList();
+        return await query.ToListAsync();
     }
 }
