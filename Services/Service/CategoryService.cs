@@ -1,5 +1,8 @@
 ﻿using BusinessObject.Models;
 using DataAccess.InterfaceRepo;
+using DataAccess.Repositories;
+using Microsoft.AspNetCore.SignalR;
+using Services.HubSignalR;
 using Services.InterfaceService;
 
 namespace Services.Service
@@ -7,10 +10,11 @@ namespace Services.Service
     public class CategoryService : ICategoryService
     {
         private readonly ICategoryRepository _categoryRepository;
-
-        public CategoryService(ICategoryRepository categoryRepository)
+        private readonly IHubContext<Hubs> _hubContext;
+        public CategoryService(ICategoryRepository categoryRepository,  IHubContext<Hubs> hubContext)
         {
             _categoryRepository = categoryRepository;
+            _hubContext = hubContext;
         }
 
         public async Task Add(Category category)
@@ -19,12 +23,25 @@ namespace Services.Service
                 throw new ArgumentNullException(nameof(category));
 
             await _categoryRepository.Add(category);
+            await _hubContext.Clients.All.SendAsync("Created");
         }
 
         public async Task Delete(int id)
         {
+            var category = await _categoryRepository.GetById(id);
+            if (category == null)
+            {
+                throw new KeyNotFoundException("Category not found");
+            }
+
             await _categoryRepository.Delete(id);
+
+            if (category != null)
+            {
+                await _hubContext.Clients.All.SendAsync("Deleted");
+            }
         }
+        
 
         public async Task<IEnumerable<Category>> GetAll()
         {
@@ -47,6 +64,7 @@ namespace Services.Service
                 throw new ArgumentNullException(nameof(category));
 
             await _categoryRepository.Update(category);
+            await _hubContext.Clients.All.SendAsync("Updated");
         }
     }
 }

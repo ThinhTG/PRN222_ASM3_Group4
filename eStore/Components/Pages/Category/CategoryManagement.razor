@@ -217,19 +217,65 @@
     private string searchName = string.Empty;
     private string errorMessage;
     private bool isAdmin = false;
+    private HubConnection? hubConnection;
 
     protected override async Task OnInitializedAsync()
     {
         try
         {
+            // Xác thực và kiểm tra quyền admin
             var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
             var user = authState.User;
             isAdmin = user.IsInRole("Admin");
 
+            // Tải danh sách categories ban đầu
+            await LoadCategories();
+
+            // Khởi tạo kết nối SignalR
+            hubConnection = new HubConnectionBuilder()
+                .WithUrl(Navigation.ToAbsoluteUri("/hub"))
+                .Build();
+
+            // Đăng ký các sự kiện từ Hub
+            hubConnection.On("Created", async () =>
+            {
+                await LoadCategories();
+                await InvokeAsync(StateHasChanged);
+            });
+
+            hubConnection.On("Updated", async () =>
+            {
+                await LoadCategories();
+                await InvokeAsync(StateHasChanged);
+            });
+
+            hubConnection.On("Deleted", async () =>
+            {
+                await LoadCategories();
+                await InvokeAsync(StateHasChanged);
+            });
+
+            // Bắt đầu kết nối
+            await hubConnection.StartAsync();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error initializing: {ex.Message}";
+        }
+    }
+
+    private async Task LoadCategories()
+    {
+        try
+        {
             categories = await CategoryService.GetAll();
             if (!categories.Any())
             {
                 errorMessage = "No categories found. Please add a new category.";
+            }
+            else
+            {
+                errorMessage = null;
             }
         }
         catch (Exception ex)
@@ -255,6 +301,14 @@
         catch (Exception ex)
         {
             errorMessage = $"Error searching categories: {ex.Message}";
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (hubConnection is not null)
+        {
+            await hubConnection.DisposeAsync();
         }
     }
 }
