@@ -55,4 +55,9 @@ public class OrderService : IOrderService
     {
         return await _orderRepository.GetOrdersByDateRange(startDate, endDate);
     }
+
+    public async Task<IEnumerable<Order>> GetAllOrdersByMemberId(int memberId)
+    {
+        return await _orderRepository.GetAllOrdersByMemberId(memberId);
+    }
 }
