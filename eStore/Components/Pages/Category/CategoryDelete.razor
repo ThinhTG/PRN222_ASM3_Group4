@@ -1,9 +1,14 @@
 ﻿@page "/categories/delete/{Id:int}"
 @using BusinessObject.Models
+@using Microsoft.AspNetCore.Components.Authorization
 @inject Services.InterfaceService.ICategoryService CategoryService
 @inject NavigationManager Navigation
 @rendermode InteractiveServer
+<CascadingAuthenticationState>
+	<h3>Categories</h3>
 
+	<AuthorizeView Roles="Admin">
+        <Authorized Context="authContext">
 <div class="container mt-5">
     <h3 class="mb-4 text-danger">Confirm Delete</h3>
 
@@ -69,7 +74,14 @@
         </div>
     }
 </div>
+		</Authorized>
+		<NotAuthorized>
+			<p class="text-danger">Bạn không có quyền truy cập.</p>
+		</NotAuthorized>
+	</AuthorizeView>
 
+
+</CascadingAuthenticationState>
 <style>
     h3.text-danger {
         font-weight: 800;

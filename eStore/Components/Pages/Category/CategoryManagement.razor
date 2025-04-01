@@ -1,30 +1,37 @@
 ﻿@page "/categories"
 @using BusinessObject.Models
+@using Microsoft.AspNetCore.Components.Authorization
 @inject Services.InterfaceService.ICategoryService CategoryService
 @inject NavigationManager Navigation
+@inject AuthenticationStateProvider AuthenticationStateProvider
 @rendermode InteractiveServer
 
-<div class="container mt-4">
-    <h3 class="mb-4 text-primary">Category Management</h3>
+<CascadingAuthenticationState>
 
-    <div class="card shadow-sm p-3 mb-4">
-        <div class="d-flex justify-content-between align-items-center">
-            <NavLink class="btn btn-primary" href="/categories/add">
-                <i class="bi bi-plus-circle me-2"></i>Add New Category
-            </NavLink>
+        <div class="container mt-4">
+            <h3 class="mb-4 text-primary">Category Management</h3>
 
-            <div class="d-flex gap-3">
-                <div class="input-group w-auto">
-                    <span class="input-group-text"><i class="bi bi-search"></i></span>
-                    <input type="text" class="form-control" placeholder="Search by name"
-                           @bind="searchName" @bind:event="oninput" />
+            <div class="card shadow-sm p-3 mb-4">
+                <div class="d-flex justify-content-between align-items-center">
+                    @if (isAdmin) {
+                    <NavLink class="btn btn-primary" href="/categories/add">
+                        <i class="bi bi-plus-circle me-2"></i>Add New Category
+                    </NavLink>
+                    }
+                    <div class="d-flex gap-3">
+                        <div class="input-group w-auto">
+                            <span class="input-group-text"><i class="bi bi-search"></i></span>
+                            <input type="text" class="form-control" placeholder="Search by name"
+                                   @bind="searchName" @bind:event="oninput" />
+                        </div>
+                        <button class="btn btn-outline-secondary" @onclick="SearchCategories">
+                            <i class="bi bi-funnel me-2"></i>Filter
+                        </button>
+                    </div>
                 </div>
-                <button class="btn btn-outline-secondary" @onclick="SearchCategories">
-                    <i class="bi bi-funnel me-2"></i>Filter
-                </button>
             </div>
         </div>
-    </div>
+    
 
     @if (!string.IsNullOrEmpty(errorMessage))
     {
@@ -42,7 +49,10 @@
                         <th>ID</th>
                         <th>Name</th>
                         <th>Description</th>
-                        <th>Actions</th>
+                        @if (isAdmin)
+                        {
+                            <th>Actions</th>
+                        }
                     </tr>
                 </thead>
                 <tbody>
@@ -56,25 +66,29 @@
                                 </a>
                             </td>
                             <td>@category.Description</td>
-                            <td>
-                                <div class="btn-group" role="group">
-                                    <NavLink class="btn btn-sm btn-outline-warning"
-                                             href="@($"/categories/edit/{category.CategoryId}")">
-                                        <i class="bi bi-pencil"></i>
-                                    </NavLink>
-                                    <NavLink class="btn btn-sm btn-outline-danger"
-                                             href="@($"/categories/delete/{category.CategoryId}")">
-                                        <i class="bi bi-trash"></i>
-                                    </NavLink>
-                                </div>
-                            </td>
+                            @if (isAdmin)
+                            {
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <NavLink class="btn btn-sm btn-outline-warning"
+                                                 href="@($"/categories/edit/{category.CategoryId}")">
+                                            <i class="bi bi-pencil"></i>
+                                        </NavLink>
+                                        <NavLink class="btn btn-sm btn-outline-danger"
+                                                 href="@($"/categories/delete/{category.CategoryId}")">
+                                            <i class="bi bi-trash"></i>
+                                        </NavLink>
+                                    </div>
+                                </td>
+                            }
                         </tr>
                     }
                 </tbody>
             </table>
         </div>
     </div>
-</div>
+</CascadingAuthenticationState>
+
 <style>
     /* Title Styling */
     h3.text-primary {
@@ -197,15 +211,21 @@
     }
 
 </style>
+
 @code {
     private IEnumerable<Category> categories = Enumerable.Empty<Category>();
     private string searchName = string.Empty;
     private string errorMessage;
+    private bool isAdmin = false;
 
     protected override async Task OnInitializedAsync()
     {
         try
         {
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+            isAdmin = user.IsInRole("Admin");
+
             categories = await CategoryService.GetAll();
             if (!categories.Any())
             {

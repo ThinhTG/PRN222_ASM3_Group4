@@ -1,69 +1,82 @@
 ﻿@page "/members"
 @using BusinessObject.Models
+@using Microsoft.AspNetCore.Components.Authorization
 @inject Services.InterfaceService.IMemberService MemberService
 @rendermode InteractiveServer
 
-<h3>List Member</h3>
+<CascadingAuthenticationState>
+    <h3>List Member</h3>
 
-@if (members == null)
-{
-    <p>Loading...</p>
-}
-else if (!members.Any())
-{
-    <p>No members found.</p>
-}
-else
-{
-    <table class="table">
-        <thead>
-            <tr>
-                <th>MemberID</th>
-                <th>CompanyName</th>
-                <th>Email</th>
-                <th>City</th>
-                <th>Country</th>
-                <th>Action</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var member in members)
+    <AuthorizeView Roles="Admin">
+        <Authorized Context="authContext">
+            <h3>Chào mừng Admin!</h3>
+            @if (members == null)
             {
-                <tr>
-                    <td>@member.MemberId</td>
-                    <td>@member.CompanyName</td>
-                    <td>@member.Email</td>
-                    <td>@member.City</td>
-                    <td>@member.Country</td>
-                    <td>
-                        <button @onclick="() => ConfirmDelete(member.MemberId)" class="btn btn-danger">Delete</button>
-                    </td>
-                </tr>
+                <p>Loading...</p>
             }
-        </tbody>
-    </table>
-}
+            else if (!members.Any())
+            {
+                <p>No members found.</p>
+            }
+            else
+            {
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>MemberID</th>
+                            <th>CompanyName</th>
+                            <th>Email</th>
+                            <th>City</th>
+                            <th>Country</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var member in members)
+                        {
+                            <tr>
+                                <td>@member.MemberId</td>
+                                <td>@member.CompanyName</td>
+                                <td>@member.Email</td>
+                                <td>@member.City</td>
+                                <td>@member.Country</td>
+                                <td>
+                                    <button @onclick="() => ConfirmDelete(member.MemberId)" class="btn btn-danger">Delete</button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
 
-@if (showConfirmDelete)
-{
-    <div class="modal show d-block" style="background: rgba(0,0,0,0.5);">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Confirm Delete</h5>
-                    <button type="button" class="btn-close" @onclick="CancelDelete"></button>
+            @if (showConfirmDelete)
+            {
+                <div class="modal show d-block" style="background: rgba(0,0,0,0.5);">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Confirm Delete</h5>
+                                <button type="button" class="btn-close" @onclick="CancelDelete"></button>
+                            </div>
+                            <div class="modal-body">
+                                <p>Are you sure you want to delete this member?</p>
+                            </div>
+                            <div class="modal-footer">
+                                <button class="btn btn-secondary" @onclick="CancelDelete">Cancel</button>
+                                <button class="btn btn-danger" @onclick="DeleteMember">Delete</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="modal-body">
-                    <p>Are you sure you want to delete this member?</p>
-                </div>
-                <div class="modal-footer">
-                    <button class="btn btn-secondary" @onclick="CancelDelete">Cancel</button>
-                    <button class="btn btn-danger" @onclick="DeleteMember">Delete</button>
-                </div>
-            </div>
-        </div>
-    </div>
-}
+            }
+        </Authorized>
+        <NotAuthorized>
+            <p class="text-danger">Bạn không có quyền truy cập.</p>
+        </NotAuthorized>
+    </AuthorizeView>
+
+
+</CascadingAuthenticationState>
 
 @code {
     private List<Member> members;

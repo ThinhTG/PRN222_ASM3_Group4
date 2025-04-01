@@ -1,58 +1,70 @@
 ﻿@page "/categories/add"
 @using BusinessObject.Models
+@using Microsoft.AspNetCore.Components.Authorization
 @inject Services.InterfaceService.ICategoryService CategoryService
 @inject NavigationManager Navigation
 @rendermode InteractiveServer
+<CascadingAuthenticationState>
+	<h3>Categories</h3>
 
-<div class="container mt-4">
-    <h3 class="mb-4 text-primary">Add New Category</h3>
+	<AuthorizeView Roles="Admin">
+		<Authorized Context="authContext">
+			<div class="container mt-4">
+				<h3 class="mb-4 text-primary">Add New Category</h3>
 
-    @if (!string.IsNullOrEmpty(errorMessage))
-    {
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            @errorMessage
-            <button type="button" class="btn-close" @onclick="() => errorMessage = null"></button>
-        </div>
-    }
+				@if (!string.IsNullOrEmpty(errorMessage))
+				{
+					<div class="alert alert-danger alert-dismissible fade show" role="alert">
+						@errorMessage
+						<button type="button" class="btn-close" @onclick="() => errorMessage = null"></button>
+					</div>
+				}
 
-    @if (!string.IsNullOrEmpty(successMessage))
-    {
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            @successMessage
-            <button type="button" class="btn-close" @onclick="() => successMessage = null"></button>
-        </div>
-    }
+				@if (!string.IsNullOrEmpty(successMessage))
+				{
+					<div class="alert alert-success alert-dismissible fade show" role="alert">
+						@successMessage
+						<button type="button" class="btn-close" @onclick="() => successMessage = null"></button>
+					</div>
+				}
 
-    <div class="card shadow-sm p-4">
-        <EditForm Model="newCategory" OnValidSubmit="AddCategory">
-            <DataAnnotationsValidator />
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="mb-3">
-                        <label class="form-label"><i class="bi bi-tag me-2"></i>Category Name</label>
-                        <InputText class="form-control" @bind-Value="newCategory.CategoryName" />
-                        <ValidationMessage For="@(() => newCategory.CategoryName)" class="text-danger" />
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="mb-3">
-                        <label class="form-label"><i class="bi bi-text-paragraph me-2"></i>Description</label>
-                        <InputText class="form-control" @bind-Value="newCategory.Description" />
-                        <ValidationMessage For="@(() => newCategory.Description)" class="text-danger" />
-                    </div>
+                <div class="card shadow-sm p-4">
+                    <EditForm Model="newCategory" OnValidSubmit="AddCategory">
+                        <DataAnnotationsValidator />
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label"><i class="bi bi-tag me-2"></i>Category Name</label>
+                                    <InputText class="form-control" @bind-Value="newCategory.CategoryName" />
+                                    <ValidationMessage For="@(() => newCategory.CategoryName)" class="text-danger" />
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label"><i class="bi bi-text-paragraph me-2"></i>Description</label>
+                                    <InputText class="form-control" @bind-Value="newCategory.Description" />
+                                    <ValidationMessage For="@(() => newCategory.Description)" class="text-danger" />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-primary" type="submit">
+                                <i class="bi bi-plus-circle me-2"></i>Add Category
+                            </button>
+                            <NavLink class="btn btn-outline-secondary" href="/categories">
+                                <i class="bi bi-x-circle me-2"></i>Cancel
+                            </NavLink>
+                        </div>
+                    </EditForm>
                 </div>
             </div>
-            <div class="d-flex gap-2">
-                <button class="btn btn-primary" type="submit">
-                    <i class="bi bi-plus-circle me-2"></i>Add Category
-                </button>
-                <NavLink class="btn btn-outline-secondary" href="/categories">
-                    <i class="bi bi-x-circle me-2"></i>Cancel
-                </NavLink>
-            </div>
-        </EditForm>
-    </div>
-</div>
+        </Authorized>
+        <NotAuthorized>
+            <p class="text-danger">Bạn không có quyền truy cập.</p>
+        </NotAuthorized>
+    </AuthorizeView>
+</CascadingAuthenticationState>
+
 <style>
     h3.text-primary {
         font-weight: 800;
@@ -100,7 +112,6 @@
         .btn-primary:hover {
             background-color: #0056b3;
         }
-
     .btn-outline-secondary {
         border-color: #6c757d;
         color: #6c757d;
@@ -122,17 +133,18 @@
     }
 
 </style>
-@code {
-    private Category newCategory = new();
-    private string? errorMessage, successMessage;
 
-    private async Task AddCategory()
-    {
-        if (string.IsNullOrEmpty(newCategory.CategoryName))
-        {
-            errorMessage = "Category Name is required.";
-            return;
-        }
+@code {
+	private Category newCategory = new();
+	private string? errorMessage, successMessage;
+
+	private async Task AddCategory()
+	{
+		if (string.IsNullOrEmpty(newCategory.CategoryName))
+		{
+			errorMessage = "Category Name is required.";
+			return;
+		}
 
         try
         {
