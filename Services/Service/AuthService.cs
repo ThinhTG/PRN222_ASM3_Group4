@@ -1,11 +1,13 @@
-﻿using BusinessObject.Models;
+
+﻿using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
+using BCrypt.Net;
+using BusinessObject.Models;
 using DataAccess.InterfaceRepo;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using Services.DTOs;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
 
 namespace Services.Service
 {
@@ -22,7 +24,7 @@ namespace Services.Service
 
         public async Task<LoginResponseDTO> LoginAsync(LoginDTO loginRequest)
         {
-            var member =  await _memberRepo.GetMemberByEmailAsync(loginRequest.Email);
+            var member = await _memberRepo.GetMemberByEmailAsync(loginRequest.Email);
             if (member == null || !BCrypt.Net.BCrypt.Verify(loginRequest.Password, member.Password))
             {
                 return null; // Email không tồn tại hoặc mật khẩu không đúng
@@ -30,7 +32,7 @@ namespace Services.Service
             var response = new LoginResponseDTO
             {
                 Email = member.Email,
-                Token = GenerateJwtToken(member)
+                Token = GenerateJwtToken(member),
             };
             return response;
         }
@@ -41,10 +43,11 @@ namespace Services.Service
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Key"]));
 
             var claims = new List<Claim>
-        {
-            new Claim(ClaimTypes.Role, member.Role),
-            new Claim(ClaimTypes.Email, member.Email)
-        };
+            {
+                new Claim(ClaimTypes.Role, member.Role),
+                new Claim(ClaimTypes.Email, member.Email),
+                new Claim(ClaimTypes.NameIdentifier, member.MemberId.ToString()),
+            };
 
             var token = new JwtSecurityToken(
                 issuer: jwtSettings["Issuer"],
@@ -82,7 +85,7 @@ namespace Services.Service
                 CompanyName = registerRequest.CompanyName,
                 City = registerRequest.City,
                 Country = registerRequest.Country,
-                Role = "Customer"
+                Role = "Customer",
             };
 
             await _memberRepo.AddMemberAsync(newMember);

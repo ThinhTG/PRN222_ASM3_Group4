@@ -7,7 +7,9 @@ namespace BusinessObject.Models;
 
 public partial class OrderDetail
 {
-    public int OrderId { get; set; }
+    public int OrderDetailId { get; set; }
+    public int? OrderId { get; set; }
+    public int MemberId { get; set; }
 
     public int ProductId { get; set; }
 
@@ -17,7 +19,8 @@ public partial class OrderDetail
 
     public float Discount { get; set; }
 
-    public virtual Order Order { get; set; }
+    public virtual Order? Order { get; set; }
 
     public virtual Product Product { get; set; }
+    public virtual Member Member { get; set; }
 }

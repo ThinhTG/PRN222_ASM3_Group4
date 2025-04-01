@@ -11,34 +11,42 @@ namespace DataAccess.DBContext
         public DbSet<Product> Products { get; set; }
         public DbSet<Category> Categories { get; set; }
 
-        public eStoreContext(DbContextOptions<eStoreContext> options) : base(options)
+        public eStoreContext(DbContextOptions<eStoreContext> options)
+            : base(options)
         {
-            this.Database.EnsureCreated(); 
+            this.Database.EnsureCreated();
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<OrderDetail>()
-                .HasKey(od => new { od.OrderId, od.ProductId });
+            modelBuilder.Entity<OrderDetail>().HasKey(od => new { od.OrderDetailId });
 
-            modelBuilder.Entity<Order>()
+            modelBuilder
+                .Entity<Order>()
                 .HasOne(o => o.Member)
                 .WithMany(m => m.Orders)
                 .HasForeignKey(o => o.MemberId);
 
-            modelBuilder.Entity<OrderDetail>()
+            modelBuilder
+                .Entity<OrderDetail>()
                 .HasOne(od => od.Order)
                 .WithMany(o => o.OrderDetails)
-                .HasForeignKey(od => od.OrderId);
+                .HasForeignKey(od => od.OrderId)
+                .IsRequired(false);
 
-            modelBuilder.Entity<OrderDetail>()
+            modelBuilder
+                .Entity<OrderDetail>()
                 .HasOne(od => od.Product)
                 .WithMany(p => p.OrderDetails)
                 .HasForeignKey(od => od.ProductId);
 
-            modelBuilder.Entity<Product>()
-                .HasOne(p => p.Category)
-                .WithMany(c => c.Product);
+            modelBuilder
+                .Entity<OrderDetail>()
+                .HasOne(od => od.Member)
+                .WithMany(p => p.OrderDetails)
+                .HasForeignKey(od => od.MemberId);
+
+            modelBuilder.Entity<Product>().HasOne(p => p.Category).WithMany(c => c.Product);
         }
     }
 }

@@ -9,28 +9,8 @@
 
 <div class="page">
     <div class="sidebar">
-    <AdminNavMenu />
+        <NavMenu />
     </div>
-    @* @if (IsAuthenticated) *@
-    @* { *@
-    @*     <div class="sidebar"> *@
-    @*         @switch (UserRole) *@
-    @*         { *@
-    @*             case "Admin": *@
-    @*                 <AdminNavMenu /> *@
-    @*                 break; *@
-    @*             case "Customer": *@
-    @*                 <CustomerNavMenu /> *@
-    @*                 break; *@
-    @*             case "Staff": *@
-    @*                 <StaffNavMenu /> *@
-    @*                 break; *@
-    @*             default: *@
-    @*                 <GuestNavMenu /> *@
-    @*                 break; *@
-    @*         } *@
-    @*     </div> *@
-    @* } *@
 
     <main>
 

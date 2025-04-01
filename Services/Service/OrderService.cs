@@ -31,6 +31,11 @@ public class OrderService : IOrderService
         await _orderRepository.AddOrder(order);
     }
 
+    public async Task<int> CreateOrderReturn(Order order)
+    {
+        return await _orderRepository.AddOrderReturn(order);
+    }
+
     public async Task UpdateOrder(Order order)
     {
         var existingOrder = await _orderRepository.GetOrderById(order.OrderId);
@@ -49,5 +54,10 @@ public class OrderService : IOrderService
     public async Task<IEnumerable<Order>> GetSalesReport(DateTime startDate, DateTime endDate)
     {
         return await _orderRepository.GetOrdersByDateRange(startDate, endDate);
+    }
+
+    public async Task<IEnumerable<Order>> GetAllOrdersByMemberId(int memberId)
+    {
+        return await _orderRepository.GetAllOrdersByMemberId(memberId);
     }
 }
