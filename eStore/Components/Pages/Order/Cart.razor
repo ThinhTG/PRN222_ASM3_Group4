@@ -1,0 +1,177 @@
+﻿@page "/cart"
+@using BusinessObject.Models
+@using Microsoft.AspNetCore.Components.Authorization
+@using Services.InterfaceService
+@inject IOrderService OrderService
+@inject IOrderDetailService OrderDetailService
+@inject NavigationManager NavigationManager
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@using System.Security.Claims
+@using Services.Service
+@rendermode InteractiveServer
+
+<h3>Cart List</h3>
+
+@if (!string.IsNullOrEmpty(successMessage))
+{
+    <div class="alert alert-success">@successMessage</div>
+}
+
+@if (loading)
+{
+    <p><em>Loading...</em></p>
+}
+else if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger">@errorMessage</div>
+}
+else
+{
+    @if (orderDetails == null || !orderDetails.Any())
+    {
+        <p>No items in cart.</p>
+    }
+    else
+    {
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Product Name</th>
+                    <th>Unit Price</th>
+                    <th>Quantity</th>
+                    <th>Total</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var order in orderDetails)
+                {
+                    <tr>
+                        <td>@order.Product.ProductName</td>
+                        <td>@order.UnitPrice</td>
+                        <td>@order.Quantity</td>
+                        <td>@(order.UnitPrice * order.Quantity)</td>
+                        <td>
+                            <button class="btn btn-danger btn-sm" @onclick="() => DeleteFromCart(order)">Remove</button>
+                        </td>
+                    </tr>
+                }
+                <tr>
+                    <td colspan="3" class="text-right"><strong>Order Total:</strong></td>
+                    <td><strong>@orderDetails.Sum(od => od.UnitPrice * od.Quantity)</strong></td>
+                    <td></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="mb-3">
+            <button class="btn btn-success" @onclick="PlaceOrder">Place Order</button>
+        </div>
+    }
+}
+
+@code {
+    private IEnumerable<OrderDetail> orderDetails;
+    private bool loading = true;
+    private string errorMessage;
+    private string successMessage;
+    private int memberId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadOrders();
+    }
+
+    private async Task LoadOrders()
+    {
+        try
+        {
+            var customAuthStateProvider = (CustomAuthStateProvider)AuthenticationStateProvider;
+            await customAuthStateProvider.InitializeAsync();
+            StateHasChanged();
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var memberIdStr = authState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrEmpty(memberIdStr))
+            {
+                errorMessage = "You must be logged in to view your cart.";
+                return;
+            }
+
+            memberId = int.Parse(memberIdStr);
+            orderDetails = await OrderDetailService.GetOrderDetailsByMemberId(memberId);
+
+            // Filter to only get items with null OrderId (cart items)
+            orderDetails = orderDetails.Where(od => od.OrderId == null).ToList();
+
+            if (orderDetails == null || !orderDetails.Any())
+            {
+                errorMessage = "No items in your cart.";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error loading cart: {ex.Message}";
+        }
+        finally
+        {
+            loading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task DeleteFromCart(OrderDetail orderDetail)
+    {
+        try
+        {
+            await OrderDetailService.DeleteOrderDetailById(orderDetail.OrderDetailId);
+            successMessage = $"Removed {orderDetail.Product.ProductName} from your cart.";
+            await LoadOrders();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error removing item from cart: {ex.Message}";
+        }
+    }
+
+    private async Task PlaceOrder()
+    {
+        try
+        {
+            if (orderDetails == null || !orderDetails.Any())
+            {
+                errorMessage = "Cannot place an order with an empty cart.";
+                return;
+            }
+
+            // 1. Create a new Order
+            var newOrder = new Order
+                {
+                    MemberId = memberId,
+                    OrderDate = DateTime.Now,
+                    RequiredDate = DateTime.Now.AddDays(7), // Default shipping time
+                    ShippedDate = null, // Not shipped yet
+                    Freight = 0, // You might calculate this based on items or address
+                                 // Add any other required Order properties
+                };
+
+            // 2. Save the order to get its ID
+            int orderId = await OrderService.CreateOrderReturn(newOrder);
+
+            // 3. Update all OrderDetails with the new OrderId
+            foreach (var detail in orderDetails)
+            {
+                detail.OrderId = orderId;
+                await OrderDetailService.UpdateOrderDetail(detail);
+            }
+
+            // 4. Show success message and redirect to order confirmation
+            successMessage = "Order placed successfully!";
+            NavigationManager.NavigateTo($"/orders/details/{orderId}");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error placing order: {ex.Message}";
+        }
+    }
+}
