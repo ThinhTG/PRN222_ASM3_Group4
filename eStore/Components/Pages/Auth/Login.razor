@@ -43,16 +43,13 @@
 </div>
 
 <style>
-    /* Container for the entire page */
     .login-container {
         min-height: 100vh;
         display: flex;
         align-items: center;
         justify-content: center;
-        background: linear-gradient(135deg, #f0f4ff, #d9e2ff); /* Light blue gradient */
+        background: linear-gradient(135deg, #f0f4ff, #d9e2ff);
     }
-
-    /* Login card styling */
     .login-card {
         background-color: #ffffff;
         box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
@@ -63,71 +60,56 @@
         text-align: center;
         transition: transform 0.3s ease;
     }
-
-        .login-card:hover {
-            transform: scale(1.05);
-        }
-
-    /* Title styling */
+    .login-card:hover {
+        transform: scale(1.05);
+    }
     .login-title {
         font-size: 2rem;
         font-weight: 800;
-        color: #2a4365; /* Deep blue */
+        color: #2a4365;
         margin-bottom: 8px;
     }
-
-    /* Subtitle styling */
     .login-subtitle {
         font-size: 0.9rem;
-        color: #718096; /* Slate gray */
+        color: #718096;
         margin-bottom: 20px;
     }
-
-    /* Error message styling */
     .error-message {
-        color: #dc2626; /* Bright red */
-        background-color: #fee2e2; /* Light red */
+        color: #dc2626;
+        background-color: #fee2e2;
         padding: 8px;
         border-radius: 8px;
         margin-top: 16px;
         font-size: 0.95rem;
     }
-
-    /* Form container */
     .form-container {
         margin-top: 30px;
         display: flex;
         flex-direction: column;
-        gap: 20px; /* Vertical spacing between inputs */
+        gap: 20px;
     }
-
-    /* Input fields */
     .input-field {
         width: 100%;
         padding: 12px 16px;
-        border: 2px solid #e2e8f0; /* Light gray border */
+        border: 2px solid #e2e8f0;
         border-radius: 10px;
-        background-color: #f7fafc; /* Off-white */
-        color: #1a202c; /* Dark gray text */
+        background-color: #f7fafc;
+        color: #1a202c;
         font-size: 1rem;
         transition: all 0.2s ease;
     }
-
-        .input-field::placeholder {
-            color: #a0aec0; /* Muted gray */
-        }
-
-        .input-field:focus {
-            outline: none;
-            border-color: #4299e1; /* Sky blue */
-            box-shadow: 0 0 8px rgba(66, 153, 225, 0.5); /* Glow effect */
-        }
-
-    /* Login button */
+    .input-field::placeholder {
+        color: #a0aec0;
+    }
+    .input-field:focus {
+        outline: none;
+        border-color: #4299e1;
+        box-shadow: 0 0 8px rgba(66, 153, 225, 0.5);
+    }
     .login-button {
         width: 100%;
         padding: 12px;
-        background: linear-gradient(to right, #ed8936, #f56565); /* Orange to red gradient */
+        background: linear-gradient(to right, #ed8936, #f56565);
         color: #ffffff;
         border: none;
         border-radius: 10px;
@@ -137,29 +119,24 @@
         transition: all 0.3s ease;
         box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
     }
-
-        .login-button:hover {
-            background: linear-gradient(to right, #f56565, #ed8936); /* Reverse gradient on hover */
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
-        }
-
-    /* Signup text and link */
+    .login-button:hover {
+        background: linear-gradient(to right, #f56565, #ed8936);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+    }
     .signup-text {
         margin-top: 20px;
         font-size: 0.9rem;
-        color: #4a5568; /* Dark gray */
+        color: #4a5568;
     }
-
     .signup-link {
-        color: #48bb78; /* Green */
+        color: #48bb78;
         text-decoration: none;
         transition: color 0.2s ease;
     }
-
-        .signup-link:hover {
-            color: #2f855a; /* Darker green */
-            text-decoration: underline;
-        }
+    .signup-link:hover {
+        color: #2f855a;
+        text-decoration: underline;
+    }
 </style>
 
 @code {
@@ -176,6 +153,7 @@
         {
             var customAuthStateProvider = (CustomAuthStateProvider)AuthStateProvider;
             await customAuthStateProvider.LoginAsync(response);
+            Console.WriteLine("Login completed, token stored.");
 
             var handler = new JwtSecurityTokenHandler();
             var tokenS = handler.ReadJwtToken(response.Token);

@@ -1,8 +1,10 @@
-﻿@using Microsoft.AspNetCore.Components.Authorization
-@using Services.Service
+
+﻿@using Services.Service
+@using Microsoft.AspNetCore.Components.Authorization
 @inherits LayoutComponentBase
-@inject NavigationManager Navigation
 @inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager Navigation
+
 
 <div class="page">
     <div class="sidebar">
@@ -30,17 +32,17 @@
     @* } *@
 
     <main>
-        <div class="top-row px-4">
-            @if (IsAuthenticated)
-            {
-                <a href="#" class="auth-button logout-button" @onclick="Logout">Logout</a>
-            }
-            else
-            {
+
+        <AuthorizeView>
+            <Authorized>
+                <button class="auth-button logout-button" @onclick="HandleLogout">Logout</button>
+            </Authorized>
+            <NotAuthorized>
                 <a href="/login" class="auth-button login-button">Login</a>
                 <a href="/register" class="auth-button register-button">Register</a>
-            }
-        </div>
+            </NotAuthorized>
+        </AuthorizeView>
+
 
         <article class="content px-4">
             @Body
@@ -55,141 +57,152 @@
 </div>
 
 @code {
-    private bool IsAuthenticated { get; set; }
-    private string UserRole { get; set; } = "Customer"; // Mặc định là Guest
-
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        try
+        if (firstRender)
         {
+            Console.WriteLine("OnAfterRenderAsync: Initializing auth state...");
             var customAuthStateProvider = (CustomAuthStateProvider)AuthStateProvider;
-            var authState = await customAuthStateProvider.GetAuthenticationStateAsync();
-            IsAuthenticated = authState.User.Identity?.IsAuthenticated ?? false;
-
-            if (IsAuthenticated)
-            {
-                UserRole = await customAuthStateProvider.GetUserRoleAsync();
-            }
-
+            await customAuthStateProvider.InitializeAsync();
             StateHasChanged();
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error retrieving authentication state: {ex.Message}");
         }
     }
 
-
-    private async Task Logout()
+    private async Task HandleLogout()
     {
-        try
-        {
-            var customAuthStateProvider = (CustomAuthStateProvider)AuthStateProvider;
-            await customAuthStateProvider.LogoutAsync();
-
-            IsAuthenticated = false;
-            UserRole = "Customer";
-            Navigation.NavigateTo("/shop", forceLoad: true);
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error during logout: {ex.Message}");
-        }
+        Console.WriteLine("HandleLogout: Logging out...");
+        var customAuthStateProvider = (CustomAuthStateProvider)AuthStateProvider;
+        await customAuthStateProvider.LogoutAsync();
+        Navigation.NavigateTo("/login");
     }
 }
 
 <style>
-    /* Giữ nguyên toàn bộ style từ code gốc */
     .page {
         display: flex;
         flex-direction: row;
         min-height: 100vh;
+        background: linear-gradient(135deg, #f0f4ff, #e2e8f0); /* Gradient nền nhẹ */
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Font hiện đại */
     }
 
+
+    /* Sidebar */
     .sidebar {
         width: 250px;
-        background-color: #1e293b;
+        background: #1e293b; /* Màu tối cho sidebar */
         flex-shrink: 0;
+        box-shadow: 4px 0 15px rgba(0, 0, 0, 0.2); /* Thêm bóng đổ */
+        transition: width 0.3s ease; /* Hiệu ứng khi thay đổi kích thước */
     }
 
+
+    /* Main content */
     main {
         flex: 1;
-        background-color: #f8fafc;
+        background: #ffffff; /* Nền trắng sạch */
+        padding: 20px;
+        border-radius: 12px; /* Bo góc nhẹ */
+        margin: 20px; /* Khoảng cách với sidebar */
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05); /* Bóng đổ nhẹ */
     }
 
-    .top-row {
-        display: flex;
-        justify-content: flex-end;
-        align-items: center;
-        padding: 1rem;
-        background-color: #ffffff;
-        border-bottom: 1px solid #e2e8f0;
-    }
+    /* Nút chung */
 
     .auth-button {
-        padding: 8px 16px;
-        border-radius: 8px;
+        padding: 10px 20px; /* Tăng padding cho nút lớn hơn */
+        border-radius: 25px; /* Bo góc tròn hơn */
         text-decoration: none;
-        font-weight: 600;
-        font-size: 0.95rem;
-        transition: all 0.3s ease;
-        display: inline-block;
+        font-weight: 700; /* Đậm hơn */
+        font-size: 1rem;
+        text-transform: uppercase; /* Chữ in hoa */
+        letter-spacing: 0.5px; /* Khoảng cách chữ */
+        display: inline-flex; /* Căn giữa nội dung */
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease-in-out; /* Hiệu ứng mượt mà */
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); /* Bóng đổ nhẹ */
+        margin: 0 10px 10px 0; /* Khoảng cách giữa các nút */
     }
 
+
+    /* Nút Login */
     .login-button {
-        background: linear-gradient(to right, #ed8936, #f56565);
+        background: linear-gradient(45deg, #ff6b6b, #ff8e53); /* Gradient đẹp hơn */
+
         color: #ffffff;
-        margin-right: 10px;
     }
 
-        .login-button:hover {
-            background: linear-gradient(to right, #f56565, #ed8936);
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-        }
 
+    .login-button:hover {
+        background: linear-gradient(45deg, #ff8e53, #ff6b6b); /* Đảo gradient khi hover */
+        transform: translateY(-2px); /* Nâng lên khi hover */
+        box-shadow: 0 6px 15px rgba(255, 107, 107, 0.4); /* Bóng đổ nổi bật */
+    }
+
+    /* Nút Register */
     .register-button {
-        background: linear-gradient(to right, #6b7280, #3b82f6);
+        background: linear-gradient(45deg, #4b6cb7, #182848); /* Gradient xanh dương */
         color: #ffffff;
     }
 
-        .register-button:hover {
-            background: linear-gradient(to right, #3b82f6, #6b7280);
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-        }
+    .register-button:hover {
+        background: linear-gradient(45deg, #182848, #4b6cb7); /* Đảo gradient khi hover */
+        transform: translateY(-2px); /* Nâng lên khi hover */
+        box-shadow: 0 6px 15px rgba(75, 108, 183, 0.4); /* Bóng đổ nổi bật */
+    }
 
+    /* Nút Logout */
     .logout-button {
-        background: linear-gradient(to right, #dc2626, #f87171);
+        background: linear-gradient(45deg, #e53e3e, #9b2c2c); /* Gradient đỏ */
         color: #ffffff;
+        border: none; /* Loại bỏ border mặc định của button */
+        cursor: pointer;
     }
 
-        .logout-button:hover {
-            background: linear-gradient(to right, #f87171, #dc2626);
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-        }
+    .logout-button:hover {
+        background: linear-gradient(45deg, #9b2c2c, #e53e3e); /* Đảo gradient khi hover */
+        transform: translateY(-2px); /* Nâng lên khi hover */
+        box-shadow: 0 6px 15px rgba(229, 62, 62, 0.4); /* Bóng đổ nổi bật */
+    }
 
     .content {
-        padding: 1rem;
+        padding: 1.5rem; /* Tăng padding cho thoáng */
+        background: #f9fafb; /* Nền xám nhạt */
+        border-radius: 8px; /* Bo góc nhẹ */
+        min-height: calc(100vh - 100px); /* Đảm bảo chiều cao đủ */
     }
 
+
+    /* Thông báo lỗi */
     #blazor-error-ui {
-        background-color: #fee2e2;
+        background: #fef2f2; /* Nền đỏ nhạt mềm hơn */
         color: #dc2626;
         padding: 1rem;
         text-align: center;
         position: fixed;
         bottom: 0;
-        width: 100%;
+        left: 0;
+        right: 0;
+        border-top: 2px solid #f87171; /* Viền trên đỏ */
+        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1); /* Bóng đổ lên trên */
+        font-size: 0.95rem;
+        z-index: 1000; /* Đảm bảo luôn ở trên cùng */
     }
 
-        #blazor-error-ui .reload,
-        #blazor-error-ui .dismiss {
-            color: #dc2626;
-            margin-left: 10px;
-            text-decoration: none;
-        }
 
-            #blazor-error-ui .reload:hover,
-            #blazor-error-ui .dismiss:hover {
-                text-decoration: underline;
-            }
+    #blazor-error-ui .reload,
+    #blazor-error-ui .dismiss {
+        color: #dc2626;
+        margin-left: 15px;
+        text-decoration: none;
+        font-weight: 600;
+        transition: color 0.2s ease;
+    }
+
+    #blazor-error-ui .reload:hover,
+    #blazor-error-ui .dismiss:hover {
+        color: #b91c1c; /* Đậm hơn khi hover */
+        text-decoration: underline;
+    }
 </style>
