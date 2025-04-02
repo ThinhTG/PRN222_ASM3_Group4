@@ -8,6 +8,8 @@
 @rendermode InteractiveServer
 
 <CascadingAuthenticationState>
+	<AuthorizeView>
+		<Authorized Context="authContext">
 	<div class="container mt-4">
 		<h3 class="mb-4 text-primary">Product Management</h3>
 
@@ -105,6 +107,12 @@
 			</div>
 		</div>
 	</div>
+		</Authorized>
+		<NotAuthorized>
+			<p class="text-danger">You do not have permission to access this page.</p>
+		</NotAuthorized>
+	</AuthorizeView>
+
 </CascadingAuthenticationState>
 
 <style>
@@ -236,6 +244,14 @@
 	/* Hover Effect for Buttons */
 	.btn-group .btn:hover {
 		transform: scale(1.05);
+	}
+
+	.text-danger {
+		color: #dc3545; 
+		font-weight: 600;
+		font-size: 1.5rem; 
+		text-align: center;
+		padding: 10px; 
 	}
 
 </style>
