@@ -13,18 +13,26 @@
     </div>
 
     <main>
-
         <AuthorizeView>
             <Authorized>
                 <button class="auth-button logout-button" @onclick="HandleLogout">Logout</button>
-
-                    <button class="auth-button logout-button" @onclick="HandleReport">Report</button>
-                
             </Authorized>
             <NotAuthorized>
                 <a href="/login" class="auth-button login-button">Login</a>
                 <a href="/register" class="auth-button register-button">Register</a>
             </NotAuthorized>
+        </AuthorizeView>
+        <AuthorizeView Roles="Admin">
+            <Authorized>
+               @*  <button class="auth-button logout-button" @onclick="HandleLogout">Logout</button> *@
+
+                    <button class="auth-button logout-button" @onclick="HandleReport">Report</button>
+                
+            </Authorized>
+          @*   <NotAuthorized>
+                <a href="/login" class="auth-button login-button">Login</a>
+                <a href="/register" class="auth-button register-button">Register</a>
+            </NotAuthorized> *@
         </AuthorizeView>
 
 

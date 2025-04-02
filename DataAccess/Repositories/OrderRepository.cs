@@ -103,9 +103,7 @@ namespace DataAccess.Repositories
             DateTime endDate
         )
         {
-            return await _context.Orders
-                .Include(o => o.OrderDetails) // Load OrderDetails
-                .Where(o => o.OrderDate >= startDate && o.OrderDate <= endDate)
+            
             return await _context
                 .Orders.Where(o => o.OrderDate >= startDate && o.OrderDate <= endDate)
                 .ToListAsync();

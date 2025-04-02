@@ -6,6 +6,7 @@
 @inject IOrderDetailService OrderDetailService
 @inject NavigationManager NavigationManager
 @inject AuthenticationStateProvider AuthenticationStateProvider
+@inject IProductService productService
 @using System.Security.Claims
 @using Services.Service
 @rendermode InteractiveServer
@@ -157,7 +158,13 @@ else
 
             // 2. Save the order to get its ID
             int orderId = await OrderService.CreateOrderReturn(newOrder);
-
+            foreach(var item in orderDetails){
+                Product product = new Product();
+                product = item.Product;
+                product.UnitsInStock -= item.Quantity;
+                await productService.Update(product);
+            }
+             
             // 3. Update all OrderDetails with the new OrderId
             foreach (var detail in orderDetails)
             {
