@@ -19,7 +19,7 @@ namespace eStore
             var builder = WebApplication.CreateBuilder(args);
             builder.Services.AddRazorComponents()
                 .AddInteractiveServerComponents();
-
+            builder.Services.AddSignalR();
             builder.Services.AddRazorComponents().AddInteractiveServerComponents();
             builder.Services.AddScoped<AuthenticationStateProvider, CustomAuthStateProvider>();
             builder.Services.AddScoped<CustomAuthStateProvider>();
@@ -62,7 +62,7 @@ namespace eStore
                             Encoding.UTF8.GetBytes(jwtSettings["Key"])
                         ),
 
-                        // ✅ Giữ nguyên tên claim không chuyển thành "name", "sub" v.v...
+                        
                         NameClaimType = ClaimTypes.Name,
                         RoleClaimType = ClaimTypes.Role,
                     };
@@ -80,7 +80,7 @@ namespace eStore
             app.UseStaticFiles();
             app.UseAntiforgery();
             app.MapHub<Hubs>("/hub");
-
+            app.MapHub<OrderHub>("/orderHub");
             app.MapRazorComponents<App>().AddInteractiveServerRenderMode();
 
             app.Run();

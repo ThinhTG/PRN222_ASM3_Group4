@@ -1,8 +1,11 @@
 @page "/orders"
 @using BusinessObject.Models
 @using Services.InterfaceService
+@using Microsoft.AspNetCore.SignalR.Client
+@using System.Collections.ObjectModel
 @inject IOrderService OrderService
 @inject NavigationManager NavigationManager
+@inject IServiceScopeFactory ScopeFactory
 
 <h3>Order List</h3>
 
@@ -44,6 +47,7 @@ else
             <tbody>
             @foreach (var order in orders)
             {
+                Console.WriteLine($"Rendering Order ID: {order.OrderId}, Freight: {order.Freight}");
                 <tr>
                     <td>@order.OrderId</td>
                     <td>@order.MemberId</td>
@@ -64,33 +68,97 @@ else
 }
 
 @code {
-    private IEnumerable<Order> orders;
+    private ObservableCollection<Order> orders = new ObservableCollection<Order>();
     private bool loading = true;
     private string errorMessage;
+    private HubConnection hubConnection;
 
     protected override async Task OnInitializedAsync()
     {
-        await LoadOrders();
-    }
+        hubConnection = new HubConnectionBuilder()
+            .WithUrl(NavigationManager.ToAbsoluteUri("/orderHub"))
+            .Build();
 
-    private async Task LoadOrders()
-    {
+        hubConnection.On<int>("OrderCreated", async (orderId) =>
+        {
+            Console.WriteLine($"Received OrderCreated event for OrderId: {orderId}");
+            await LoadOrders();
+            await InvokeAsync(StateHasChanged);
+        });
+
+        hubConnection.On<int>("OrderUpdated", async (orderId) =>
+        {
+            Console.WriteLine($"Received OrderUpdated event for OrderId: {orderId}");
+            await LoadOrders();
+            await InvokeAsync(StateHasChanged);
+        });
+
+        hubConnection.On<int>("OrderDeleted", async (orderId) =>
+        {
+            Console.WriteLine($"Received OrderDeleted event for OrderId: {orderId}");
+            await LoadOrders();
+            await InvokeAsync(StateHasChanged);
+        });
+
         try
         {
-            orders = await OrderService.GetAllOrders();
+            await hubConnection.StartAsync();
+            Console.WriteLine("SignalR connected successfully in OrderList");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error connecting to SignalR: {ex.Message}";
+        }
+
+        await LoadOrders();
+    }
+    
+
+private async Task LoadOrders()
+{
+    try
+    {
+        loading = true;
+        using (var scope = ScopeFactory.CreateScope())
+        {
+            var orderService = scope.ServiceProvider.GetRequiredService<IOrderService>();
+            var newOrders = await orderService.GetAllOrders();
+            orders.Clear();
+            foreach (var order in newOrders)
+            {
+                orders.Add(order);
+            }
+            Console.WriteLine($"Loaded {orders.Count} orders");
+            foreach (var order in orders)
+            {
+                Console.WriteLine($"Order ID: {order.OrderId}, Freight: {order.Freight}");
+            }
             if (orders == null || !orders.Any())
             {
                 errorMessage = "No orders found in the system.";
             }
+            else
+            {
+                errorMessage = null;
+            }
         }
-        catch (Exception ex)
+    }
+    catch (Exception ex)
+    {
+        errorMessage = $"Error loading orders: {ex.Message}";
+    }
+    finally
+    {
+        loading = false;
+        await InvokeAsync(StateHasChanged);
+    }
+}
+
+    public async ValueTask DisposeAsync()
+    {
+        if (hubConnection != null)
         {
-            errorMessage = $"Error loading orders: {ex.Message}";
-        }
-        finally
-        {
-            loading = false;
-            StateHasChanged();
+            await hubConnection.DisposeAsync();
         }
     }
 }

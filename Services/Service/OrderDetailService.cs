@@ -45,13 +45,7 @@ public class OrderDetailService : IOrderDetailService
 
     public async Task UpdateOrderDetail(OrderDetail orderDetail)
     {
-        //var existingDetail = await _orderDetailRepository.GetOrderDetail(
-        //    orderDetail.OrderId,
-        //    orderDetail.ProductId
-        //);
-        var existingDetail = await _orderDetailRepository.GetOrderDetailById(
-            orderDetail.OrderDetailId
-        );
+        var existingDetail = await _orderDetailRepository.GetOrderDetailById(orderDetail.OrderDetailId);
         if (existingDetail != null)
         {
             _mapper.Map(orderDetail, existingDetail);

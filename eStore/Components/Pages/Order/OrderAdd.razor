@@ -1,5 +1,6 @@
 @page "/orders/add"
 @using BusinessObject.Models
+@using Microsoft.AspNetCore.SignalR.Client
 @inject Services.InterfaceService.IOrderService OrderService
 @inject Services.InterfaceService.IMemberService MemberService
 @inject NavigationManager Navigation
@@ -98,11 +99,12 @@
 </div>
 
 @code {
-    private Order newOrder = new() { OrderDate = DateTime.Now }; // Default to current date
+    private Order newOrder = new() { OrderDate = DateTime.Now };
     private List<Member> members = new();
     private string? errorMessage;
     private string? successMessage;
     private bool isLoading = true;
+    private HubConnection hubConnection;
 
     protected override async Task OnInitializedAsync()
     {
@@ -113,10 +115,23 @@
             {
                 errorMessage = "No members available. Please add a member first.";
             }
+
+            // Khởi tạo kết nối SignalR
+            hubConnection = new HubConnectionBuilder()
+                .WithUrl(Navigation.ToAbsoluteUri("/orderHub"))
+                .Build();
+
+            hubConnection.On<int>("OrderCreated", (orderId) =>
+            {
+                successMessage = $"Order #{orderId} has been created!";
+                StateHasChanged();
+            });
+
+            await hubConnection.StartAsync();
         }
         catch (Exception ex)
         {
-            errorMessage = $"Error loading members: {ex.Message}";
+            errorMessage = $"Error loading members or SignalR: {ex.Message}";
         }
         finally
         {
@@ -137,7 +152,9 @@
         {
             isLoading = true;
             await OrderService.CreateOrder(newOrder);
+            Console.WriteLine($"Order created with ID: {newOrder.OrderId}");
             successMessage = "Order added successfully!";
+            await Task.Delay(1000); // Đợi 1 giây để SignalR gửi thông báo
             Navigation.NavigateTo("/orders");
         }
         catch (Exception ex)
@@ -148,6 +165,14 @@
         {
             isLoading = false;
             StateHasChanged();
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (hubConnection != null)
+        {
+            await hubConnection.DisposeAsync();
         }
     }
 }

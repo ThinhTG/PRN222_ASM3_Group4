@@ -17,8 +17,9 @@ namespace DataAccess.Repositories
 
         public async Task<IEnumerable<OrderDetail>> GetOrderDetailsByOrderId(int orderId)
         {
-            return await _context
-                .OrderDetails.Include(od => od.Product)
+            return await _context.OrderDetails
+                .AsNoTracking()
+                .Include(od => od.Product)
                 .Where(od => od.OrderId == orderId)
                 .ToListAsync();
         }
@@ -32,9 +33,9 @@ namespace DataAccess.Repositories
 
         public async Task<OrderDetail> GetOrderDetailById(int orderDetailId)
         {
-            return await _context.OrderDetails.FirstOrDefaultAsync(od =>
-                od.OrderDetailId == orderDetailId
-            );
+            return await _context.OrderDetails
+                .AsNoTracking()
+                .FirstOrDefaultAsync(od => od.OrderDetailId == orderDetailId);
         }
 
         public async Task<OrderDetail> GetOrderDetailByProductIdWithNullOrderId(
@@ -51,14 +52,31 @@ namespace DataAccess.Repositories
 
         public async Task AddOrderDetail(OrderDetail orderDetail)
         {
-            await _context.OrderDetails.AddAsync(orderDetail);
+            var newDetail = new OrderDetail
+            {
+                OrderId = orderDetail.OrderId,
+                ProductId = orderDetail.ProductId,
+                UnitPrice = orderDetail.UnitPrice,
+                Quantity = orderDetail.Quantity,
+                Discount = orderDetail.Discount,
+                MemberId = orderDetail.MemberId
+            };
+            await _context.OrderDetails.AddAsync(newDetail);
             await _context.SaveChangesAsync();
         }
-
         public async Task UpdateOrderDetail(OrderDetail orderDetail)
         {
-            _context.OrderDetails.Update(orderDetail);
-            await _context.SaveChangesAsync();
+            var existingDetail = await _context.OrderDetails.FindAsync(orderDetail.OrderDetailId);
+            if (existingDetail != null)
+            {
+                existingDetail.UnitPrice = orderDetail.UnitPrice;
+                existingDetail.Quantity = orderDetail.Quantity;
+                existingDetail.Discount = orderDetail.Discount;
+                existingDetail.ProductId = orderDetail.ProductId;
+                existingDetail.OrderId = orderDetail.OrderId;
+                existingDetail.MemberId = orderDetail.MemberId;
+                await _context.SaveChangesAsync();
+            }
         }
 
         public async Task DeleteOrderDetail(int orderId, int productId)
@@ -88,5 +106,6 @@ namespace DataAccess.Repositories
                 .Where(od => od.MemberId == memberId)
                 .ToListAsync();
         }
+        
     }
 }
