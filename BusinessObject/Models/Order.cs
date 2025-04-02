@@ -22,4 +22,7 @@ public partial class Order
     public virtual Member Member { get; set; }
 
     public virtual ICollection<OrderDetail> OrderDetails { get; set; } = new List<OrderDetail>();
+
+    // Thuộc tính tính tổng số tiền của đơn hàng
+    public decimal TotalPrice => OrderDetails?.Sum(od => od.UnitPrice * od.Quantity * (1 - (decimal)od.Discount/100)) ?? 0;
 }
