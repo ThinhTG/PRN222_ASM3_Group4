@@ -23,6 +23,7 @@ namespace DataAccess.Repositories
             // Eager loading cả Member và OrderDetails, bao gồm Product trong OrderDetails
             var order = await _context
                 .Orders.Include(o => o.Member)
+                .AsNoTracking()
                 .Include(o => o.OrderDetails)
                 .ThenInclude(od => od.Product) // Thêm dòng này để tải Product
                 .FirstOrDefaultAsync(o => o.OrderId == orderId);
@@ -48,10 +49,13 @@ namespace DataAccess.Repositories
         // Các phương thức khác giữ nguyên
         public async Task<IEnumerable<Order>> GetAllOrders()
         {
-            return await _context.Orders
+
+            var orders = await _context.Orders
                 .Include(o => o.Member)
-                .Include(o => o.OrderDetails) // Load OrderDetails để tính TotalPrice
-            return await _context.Orders.Include(o => o.Member).ToListAsync();
+                .Include(o => o.OrderDetails)
+                .ToListAsync();
+            Console.WriteLine($"Repository GetAllOrders returned {orders.Count} orders");
+            return orders;
         }
 
         public async Task<IEnumerable<Order>> GetAllOrdersByMemberId(int memberId)
@@ -78,18 +82,20 @@ namespace DataAccess.Repositories
 
         public async Task UpdateOrder(Order order)
         {
-            _context.Orders.Update(order);
-            await _context.SaveChangesAsync();
+            var existingOrder = await _context.Orders.FindAsync(order.OrderId);
+            if (existingOrder != null)
+            {
+                _context.Entry(existingOrder).CurrentValues.SetValues(order);
+                await _context.SaveChangesAsync();
+            }
         }
 
         public async Task DeleteOrder(int orderId)
         {
-            var order = await GetOrderById(orderId);
-            if (order != null)
-            {
-                _context.Orders.Remove(order);
-                await _context.SaveChangesAsync();
-            }
+            var order = new Order { OrderId = orderId };
+            _context.Orders.Attach(order);
+            _context.Orders.Remove(order);
+            await _context.SaveChangesAsync();
         }
 
         public async Task<IEnumerable<Order>> GetOrdersByDateRange(
