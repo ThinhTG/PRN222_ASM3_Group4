@@ -12,4 +12,9 @@ public interface IOrderService
     Task UpdateOrder(Order order);
     Task DeleteOrder(int orderId);
     Task<IEnumerable<Order>> GetSalesReport(DateTime startDate, DateTime endDate);
+
+    Task<decimal> GetTotalPriceByOrderId(int orderId);
 }
+
+}
+

@@ -17,6 +17,9 @@
         <AuthorizeView>
             <Authorized>
                 <button class="auth-button logout-button" @onclick="HandleLogout">Logout</button>
+
+                    <button class="auth-button logout-button" @onclick="HandleReport">Report</button>
+                
             </Authorized>
             <NotAuthorized>
                 <a href="/login" class="auth-button login-button">Login</a>
@@ -36,8 +39,12 @@
     <a href="" class="reload">Reload</a>
     <a class="dismiss">🗙</a>
 </div>
+<script src="js/JavaScript.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 
 @code {
+    private bool isAdmin = false;
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
@@ -55,6 +62,11 @@
         var customAuthStateProvider = (CustomAuthStateProvider)AuthStateProvider;
         await customAuthStateProvider.LogoutAsync();
         Navigation.NavigateTo("/login");
+    }
+    private async Task HandleReport()
+    {
+        var customAuthStateProvider = (CustomAuthStateProvider)AuthStateProvider;
+        Navigation.NavigateTo("/report");
     }
 }
 

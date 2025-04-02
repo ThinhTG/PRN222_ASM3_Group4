@@ -74,8 +74,23 @@ public class OrderService : IOrderService
         return await _orderRepository.GetOrdersByDateRange(startDate, endDate);
     }
 
+    public async Task<decimal> GetTotalPriceByOrderId(int orderId)
+    {
+        var order = await _orderRepository.GetOrderById(orderId);
+        if (order == null || order.OrderDetails == null)
+        {
+            return 0;
+        }
+
+        return order.OrderDetails.Sum(od => od.UnitPrice * od.Quantity * (1 - (decimal)od.Discount));
+    }
+
+
+
     public async Task<IEnumerable<Order>> GetAllOrdersByMemberId(int memberId)
     {
         return await _orderRepository.GetAllOrdersByMemberId(memberId);
     }
+
 }
+

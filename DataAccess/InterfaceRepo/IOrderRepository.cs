@@ -11,5 +11,8 @@ public interface IOrderRepository
     Task UpdateOrder(Order order);
     Task DeleteOrder(int orderId);
     Task<IEnumerable<Order>> GetOrdersByDateRange(DateTime startDate, DateTime endDate);
+    Task<decimal> GetTotalPriceByOrderId(int orderId);
+}
+
     Task<IEnumerable<Order>> GetAllOrdersByMemberId(int memberId);
 }

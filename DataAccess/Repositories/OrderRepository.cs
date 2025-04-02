@@ -49,6 +49,7 @@ namespace DataAccess.Repositories
         // Các phương thức khác giữ nguyên
         public async Task<IEnumerable<Order>> GetAllOrders()
         {
+
             var orders = await _context.Orders
                 .Include(o => o.Member)
                 .Include(o => o.OrderDetails)
@@ -64,6 +65,7 @@ namespace DataAccess.Repositories
                 .Where(o => o.MemberId == memberId)
                 .ToListAsync();
         }
+
 
         public async Task AddOrder(Order order)
         {
@@ -101,9 +103,29 @@ namespace DataAccess.Repositories
             DateTime endDate
         )
         {
+            return await _context.Orders
+                .Include(o => o.OrderDetails) // Load OrderDetails
+                .Where(o => o.OrderDate >= startDate && o.OrderDate <= endDate)
             return await _context
                 .Orders.Where(o => o.OrderDate >= startDate && o.OrderDate <= endDate)
                 .ToListAsync();
         }
+
+
+        public async Task<decimal> GetTotalPriceByOrderId(int orderId)
+        {
+            var order = await _context.Orders
+                .Include(o => o.OrderDetails)
+                .FirstOrDefaultAsync(o => o.OrderId == orderId);
+
+            if (order == null)
+            {
+                return 0;
+            }
+
+            return order.TotalPrice;
+        }
+
+
     }
 }
